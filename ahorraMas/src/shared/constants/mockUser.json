@@ -1,0 +1,30 @@
+{
+  "id": "u123",
+  "nombre": "Lucía Benítez",
+  "email": "lucia@example.com",
+  "ingreso": {
+    "tipo": "fijo",
+    "monto": 780400,
+    "variable": [
+      { "mes": "2025-07", "monto": 130000 },
+      { "mes": "2025-08", "monto": 125000 }
+    ]
+  },
+  "gastosFijos": [
+    { "id": "g1", "nombre": "facultad", "monto": 122064.5, "pagado": true, "fechaPago": "2025-08-01" },
+    { "id": "g2", "nombre": "servicio telefonico", "monto": 4400, "pagado": false },
+    { "id": "g3", "nombre": "spotify", "monto": 1595, "pagado": false }
+  ],
+  "transacciones": [
+    { "id": "t1", "tipo": "ingreso", "categoria": "extra", "monto": 5000, "descripcion": "Venta ", "fecha": "2025-08-10" },
+    { "id": "t2", "tipo": "gasto", "categoria": "variable", "monto": 2000, "descripcion": "Cine", "fecha": "2025-08-15" }
+  ],
+  "ahorro": {
+    "meta": 30000,
+    "porcentaje": 10,
+    "fechaLimite": "2025-12-31",
+    "acumulado": 12000,
+    "estado": "Adecuado"
+  },
+  "sobranteMesAnterior": 243305.73
+}
