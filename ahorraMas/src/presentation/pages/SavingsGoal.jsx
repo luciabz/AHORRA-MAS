@@ -5,7 +5,7 @@ export default function SavingsGoal() {
   const diasRestantes = getDiasRestantes(mockUser.ahorro.fechaLimite);
   const porcentajeAhorro = Math.min(Math.round((mockUser.ahorro.acumulado / mockUser.ahorro.meta) * 100), 100);
   return (
-    <main className="min-h-screen w-screen text-black bg-gray-50 p-6">
+    <main className=" text-black bg-gray-50 p-6">
       <header>
         <h1 className="text-3xl font-bold mb-6">Meta de Ahorro</h1>
       </header>

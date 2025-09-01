@@ -4,7 +4,7 @@ import mockUser from '../../shared/constants/mockUser.json';
 export default function FixedExpenses() {
   const [showForm, setShowForm] = React.useState(false);
   return (
-    <main className="min-h-screen w-screen text-black bg-gray-50 p-6">
+    <main className=" text-black bg-gray-50 p-6">
       <header>
         <h1 className="text-3xl font-bold mb-6">Gastos Fijos</h1>
       </header>
@@ -13,10 +13,19 @@ export default function FixedExpenses() {
           <h2 id="tabla-gastos-fijos" className="text-xl font-semibold">Listado de Gastos Fijos</h2>
           <button
             type="button"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className={`px-4 py-2 rounded cursor-pointer text-sm flex items-center gap-2 ${showForm ? 'bg-red-700 text-white hover:bg-red-800' : 'bg-green-800 text-white hover:bg-green-700'}`}
             onClick={() => setShowForm((prev) => !prev)}
+            aria-label={showForm ? 'Cerrar formulario' : 'Agregar gasto fijo'}
           >
-            Agregar
+            {showForm ? (
+              <>
+                <span className="text-lg">Cerrar</span>
+              </>
+            ) : (
+              <>
+                <span className="text-lg">Agregar</span>
+              </>
+            )}
           </button>
         </div>
         {showForm && (
@@ -29,13 +38,13 @@ export default function FixedExpenses() {
                 onClick={() => setShowForm(false)}
                 aria-label="Cerrar"
               >
-                &times;
+                
               </button>
             </div>
             <form className="flex  gap-4">
               <input type="text" placeholder="Nombre" className="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-300" />
               <input type="number" placeholder="Monto" className="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-300" />
-              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Guardar</button>
+              <button type="submit" className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition">Guardar</button>
             </form>
           </div>
         )}
