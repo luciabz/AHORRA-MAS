@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import mockUser from '../../shared/constants/mockUser.json';
 import SelectorMesBusqueda from '../components/fixedExpenses/SelectorMesBusqueda';
 import FormGastoFijo from '../components/fixedExpenses/FormGastoFijo';
