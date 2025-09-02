@@ -4,10 +4,10 @@
   "email": "lucia@example.com",
   "ingreso": {
     "tipo": "fijo",
-    "monto": 780400,
+    "montoTotal": 780400,
     "variable": [
-      { "mes": "2025-07", "monto": 130000 },
-      { "mes": "2025-08", "monto": 125000 }
+      { "descripcion": "venta de pastel", "monto": 130000 },
+      { "descripcion": "venta de galletas", "monto": 125000 }
     ]
   },
   "gastosFijos": [

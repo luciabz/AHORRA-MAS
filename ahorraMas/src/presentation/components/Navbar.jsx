@@ -9,11 +9,11 @@ export default function Navbar() {
           <Link to="/" className="!text-white font-bold hover:underline">Resumen</Link>
         </li>
         <li>
-          <Link to="/gastos-fijos" className="!text-white font-bold hover:underline">Gastos Fijos</Link>
+          <Link to="/gastos" className="!text-white font-bold hover:underline">Gastos Fijos</Link>
         </li>
        
         <li>
-          <Link to="/meta-ahorro" className="!text-white font-bold hover:underline">Meta de Ahorro</Link>
+          <Link to="/meta" className="!text-white font-bold hover:underline">Meta de Ahorro</Link>
         </li>
         <li>
           <Link to="/" className="!text-white font-bold hover:underline">Salir</Link>

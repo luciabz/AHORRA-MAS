@@ -9,8 +9,21 @@ export default function FixedExpenses() {
         <h1 className="text-3xl font-bold mb-6">Gastos Fijos</h1>
       </header>
       <section className="bg-white p-6 rounded shadow" aria-labelledby="tabla-gastos-fijos">
-        <div className="flex justify-between items-center mb-4">
-          <h2 id="tabla-gastos-fijos" className="text-xl font-semibold">Listado de Gastos Fijos</h2>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <div className="flex items-center gap-4">
+            <h2 id="tabla-gastos-fijos" className="text-xl font-semibold">Listado de Gastos Fijos</h2>
+            <div className="flex items-center gap-2">
+              <input type="month" className="border px-2 py-1 rounded text-sm" aria-label="Seleccionar mes y año" />
+              <button type="button" className="bg-gray-800 text-white px-3 py-1 rounded hover:bg-green-800 text-sm flex items-center gap-1" aria-label="Buscar">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+                Buscar
+              </button>
+            </div>
+           
+          </div>
           <button
             type="button"
             className={`px-4 py-2 rounded cursor-pointer text-sm flex items-center gap-2 ${showForm ? 'bg-red-700 text-white hover:bg-red-800' : 'bg-green-800 text-white hover:bg-green-700'}`}
@@ -19,11 +32,14 @@ export default function FixedExpenses() {
           >
             {showForm ? (
               <>
-                <span className="text-lg">Cerrar</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              <span className="text-lg">Cerrar</span>
               </>
             ) : (
               <>
-                <span className="text-lg">Agregar</span>
+                <span className="text-lg">+Agregar</span>
               </>
             )}
           </button>
@@ -41,10 +57,10 @@ export default function FixedExpenses() {
                 
               </button>
             </div>
-            <form className="flex  gap-4">
+            <form className="flex  gap-4" onSubmit={e => { e.preventDefault(); /* lógica de guardado */ }}>
               <input type="text" placeholder="Nombre" className="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-300" />
               <input type="number" placeholder="Monto" className="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-300" />
-              <button type="submit" className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition">Guardar</button>
+              <input type="submit" value="Guardar" className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition cursor-pointer" />
             </form>
           </div>
         )}
