@@ -10,7 +10,7 @@ export default function SelectorMesBusqueda({ mesSeleccionado, setMesSeleccionad
       />
       <button
         type="button"
-        className="bg-gray-800 text-white px-3 py-1 rounded hover:bg-green-800 text-sm flex items-center gap-1"
+        className="bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-800 text-sm flex items-center gap-1"
         aria-label="Buscar"
         onClick={() => {}}
       >

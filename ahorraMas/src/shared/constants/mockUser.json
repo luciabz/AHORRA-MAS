@@ -3,8 +3,7 @@
   "nombre": "Lucía Benítez",
   "email": "lucia@example.com",
   "ingreso": {
-    "tipo": "fijo",
-    "montoTotal": 780400,
+    "tipo": "variable", 
     "variable": [
       { "descripcion": "venta de pastel", "monto": 130000 },
       { "descripcion": "venta de galletas", "monto": 125000 }
