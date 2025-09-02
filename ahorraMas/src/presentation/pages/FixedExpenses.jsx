@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import mockUser from '../../shared/constants/mockUser.json';
 import SelectorMesBusqueda from '../components/fixedExpenses/SelectorMesBusqueda';
 import FormGastoFijo from '../components/fixedExpenses/FormGastoFijo';
@@ -10,7 +9,6 @@ export default function FixedExpenses() {
     const hoy = new Date();
     return hoy.toISOString().slice(0, 7);
   });
-  // Aquí podrías filtrar gastos por mes si lo necesitas
   const gastosFijos = mockUser.gastosFijos;
 
   return (

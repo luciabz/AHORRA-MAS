@@ -1,4 +1,3 @@
-import React from 'react';
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function MetaAhorro({ ahorroHistorico }) {
