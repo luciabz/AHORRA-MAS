@@ -1,3 +1,6 @@
+import React, { useEffect } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { isTokenExpired, scheduleTokenLogout } from '../shared/utils/session';
 
 export default function PrivateRoute({ children }) {
   const token = localStorage.getItem('token');
