@@ -11,7 +11,7 @@ function App() {
     <BrowserRouter>
        <Navbar />
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/meta" element={<SavingsGoal />} />
         <Route path="/gastos" element={<FixedExpenses />} />
         <Route path="/ingresos-variables" element={<VariableIncome />} />

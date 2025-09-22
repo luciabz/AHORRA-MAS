@@ -1,7 +1,8 @@
 import mockUser from '../../shared/constants/mockUser.json';
 import { getDiasRestantes } from '../../shared/utils/getDiasRestantes';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { isTokenExpired, scheduleTokenLogout } from '../../shared/utils/session';
 import ResumenTotales from '../components/dashboard/ResumenTotales';
 import SelectorMesBusqueda from '../components/dashboard/SelectorMesBusqueda';
 import DetalleIngresosGastos from '../components/dashboard/DetalleIngresosGastos';
@@ -39,13 +40,40 @@ export default function Dashboard() {
   ];
 
   const navigate = useNavigate();
+  // Cierre de sesión automático si el token expira (1 hora)
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || isTokenExpired(token)) {
+      localStorage.removeItem('token');
+      navigate('/login');
+      return;
+    }
+    const timeout = scheduleTokenLogout(token, () => {
+      localStorage.removeItem('token');
+      navigate('/login');
+    });
+    return () => timeout && clearTimeout(timeout);
+  }, [navigate]);
   const goToVariableIncome = () => {
     navigate('/ingresos-variables');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
   };
 
   return (
     <main className=" text-black bg-gray-50 p-6">
       <header>
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+          >
+            Cerrar sesión
+          </button>
+        </div>
         <section className="flex items-center gap-3 mb-2">
           <img src="/calendario.png" alt="Calendario" className="w-20 h-20" />
           <h1 >Resumen Financiero</h1>

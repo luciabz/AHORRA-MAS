@@ -1,0 +1,204 @@
+.carousel-img {
+
+    width: 120px;
+    height: 120px;
+  margin-bottom: 0.7rem;
+  filter: drop-shadow(0 2px 8px #2563eb22);
+  background: #e0e7ef;
+  border-radius: 1rem;
+  padding: 0.5rem;
+}
+.footer-icons {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+}
+.footer-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.7;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.footer-icon:hover {
+  opacity: 1;
+  transform: scale(1.1) rotate(-8deg);
+}
+.welcome-bg {
+  min-height: 100vh;
+  background: linear-gradient(120deg, #f1f5f9 0%, #dbeafe 100%);
+  display: flex;
+  flex-direction: column;
+}
+.welcome-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 2.5rem;
+  background: #fff;
+  box-shadow: 0 2px 12px 0 #0001;
+}
+.welcome-logo {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #2563eb;
+  letter-spacing: 1px;
+}
+.welcome-navlinks {
+  display: flex;
+  gap: 1rem;
+}
+.btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover {
+  background: #1d4ed8;
+}
+.btn-outline {
+  background: #fff;
+  color: #2563eb;
+  border: 2px solid #2563eb;
+}
+.btn-outline:hover {
+  background: #2563eb;
+  color: #fff;
+}
+.btn-lg {
+  font-size: 1.2rem;
+  padding: 0.8rem 2rem;
+  margin-top: 1.5rem;
+}
+.welcome-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.welcome-hero {
+  background: #fff;
+  border-radius: 1.2rem;
+  box-shadow: 0 4px 32px 0 #0002;
+  padding: 3rem 2.5rem;
+  max-width: 500px;
+  text-align: center;
+}
+.welcome-hero h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1.2rem;
+}
+.highlight {
+  color: #2563eb;
+}
+.welcome-hero p {
+  color: #334155;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+.welcome-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem 0;
+  color: #2563eb;
+  font-size: 1.05rem;
+  text-align: left;
+}
+.welcome-benefits li {
+  margin-bottom: 0.5rem;
+  padding-left: 1.2rem;
+  position: relative;
+}
+.welcome-benefits li:before {
+  content: '';
+  position: absolute;
+  left: 0.2rem;
+  top: 0.7rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  background: #2563eb;
+  border-radius: 50%;
+  opacity: 0.15;
+}
+.welcome-cta {
+  margin-top: 1.5rem;
+}
+
+.welcome-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.carousel-arrow {
+  background: #e0e7ef;
+  border: none;
+  color: #2563eb;
+  font-size: 2rem;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.carousel-arrow:hover {
+  background: #2563eb;
+  color: #fff;
+}
+.carousel-slide {
+  min-width: 220px;
+  max-width: 260px;
+  background: #f1f5f9;
+  border-radius: 0.7rem;
+  box-shadow: 0 2px 8px 0 #0001;
+  padding: 1.2rem 1rem;
+  text-align: center;
+}
+.carousel-slide h3 {
+  font-size: 1.15rem;
+  color: #2563eb;
+  margin-bottom: 0.5rem;
+}
+.carousel-slide p {
+  color: #334155;
+  font-size: 1rem;
+}
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+.dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  background: #cbd5e1;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dot.active {
+  background: #2563eb;
+}
+
+.welcome-footer {
+  text-align: center;
+  color: #64748b;
+  font-size: 1rem;
+  padding: 1.2rem 0 0.7rem 0;
+  background: none;
+  letter-spacing: 0.5px;
+}
