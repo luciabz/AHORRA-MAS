@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import mockUser from '../../shared/constants/mockUser.json';
+import mockUser from '../../infrastructure/api/mockUser.json';
+import Navbar from '../components/Navbar';
 import SelectorMesBusqueda from '../components/fixedExpenses/SelectorMesBusqueda';
 import FormGastoFijo from '../components/fixedExpenses/FormGastoFijo';
 import TablaGastosFijos from '../components/fixedExpenses/TablaGastosFijos';
@@ -13,7 +14,9 @@ export default function FixedExpenses() {
   const gastosFijos = mockUser.gastosFijos;
 
   return (
-    <main className="text-black bg-gray-50 p-6">
+    <>
+      <Navbar />
+      <main className="text-black bg-gray-50 p-6">
       <header>
         <h1 className="text-3xl font-bold mb-6">Gastos Fijos</h1>
       </header>
@@ -60,6 +63,7 @@ export default function FixedExpenses() {
         )}
         <TablaGastosFijos gastos={gastosFijos} />
       </section>
-    </main>
+      </main>
+    </>
   );
 }

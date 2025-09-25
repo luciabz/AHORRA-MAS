@@ -1,10 +1,13 @@
 import React from 'react';
-import mockUser from '../../shared/constants/mockUser.json';
+import mockUser from '../../infrastructure/api/mockUser.json';
+import Navbar from '../components/Navbar';
 
 export default function VariableIncome() {
   const [showForm, setShowForm] = React.useState(false);
   return (
-    <main className="text-black bg-gray-50 p-6">
+    <>
+      <Navbar />
+      <main className="text-black bg-gray-50 p-6">
       <header>
         <h1 className="text-3xl font-bold mb-6">Ingresos Variables</h1>
       </header>
@@ -93,6 +96,7 @@ export default function VariableIncome() {
           </tbody>
         </table>
       </section>
-    </main>
+      </main>
+    </>
   );
 }

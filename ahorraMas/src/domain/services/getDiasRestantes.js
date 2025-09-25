@@ -1,3 +1,4 @@
+// MOVIDO desde src/shared/utils/getDiasRestantes.js
 export function getDiasRestantes(fechaLimite) {
   const fechaFinal = new Date(fechaLimite);
   const hoy = new Date();

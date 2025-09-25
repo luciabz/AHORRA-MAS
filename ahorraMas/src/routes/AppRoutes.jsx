@@ -5,7 +5,9 @@ import Login from '../presentation/pages/Login';
 import Register from '../presentation/pages/Register';
 import Dashboard from '../presentation/pages/Dashboard';
 import PrivateRoute from './PrivateRoute';
-
+import Gastos from '../presentation/pages/FixedExpenses';
+import SavingsGoal from '../presentation/pages/SavingsGoal';
+import VariableIncome from '../presentation/pages/VariableIncome';
 export default function AppRoutes() {
   return (
     <Routes>
@@ -15,8 +17,26 @@ export default function AppRoutes() {
       <Route path="/dashboard" element={
         <PrivateRoute>
           <Dashboard />
+          
         </PrivateRoute>
       } />
+      <Route path="/gastos" element={
+  <PrivateRoute>
+    <Gastos />
+  </PrivateRoute>
+} />
+<Route path="/meta" element={
+  <PrivateRoute>
+    <SavingsGoal />
+  </PrivateRoute>
+} />
+
+<Route path="/ingresos-variables" element={
+  <PrivateRoute>
+    <VariableIncome />
+  </PrivateRoute>
+} />
+
     </Routes>
   );
 }

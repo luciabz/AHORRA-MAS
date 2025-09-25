@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './Auth.css';
+
 
 export default function Login() {
   const [form, setForm] = useState({ name: '', password: '' });

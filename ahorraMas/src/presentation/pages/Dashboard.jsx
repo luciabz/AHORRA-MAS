@@ -1,14 +1,17 @@
-import mockUser from '../../shared/constants/mockUser.json';
-import { getDiasRestantes } from '../../shared/utils/getDiasRestantes';
+
+import { getDiasRestantes } from '../../domain/services/getDiasRestantes';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isTokenExpired, scheduleTokenLogout } from '../../shared/utils/session';
+import { isTokenExpired, scheduleTokenLogout } from '../../domain/services/session';
 import ResumenTotales from '../components/dashboard/ResumenTotales';
+import Navbar from '../components/Navbar';
 import SelectorMesBusqueda from '../components/dashboard/SelectorMesBusqueda';
 import DetalleIngresosGastos from '../components/dashboard/DetalleIngresosGastos';
 import MetaAhorro from '../components/dashboard/MetaAhorro';
+import { UserApi } from '../../infrastructure/api/userApi';
 
-  // Datos simulados para el grafico de meta de ahorro
+
+  // Simulado, reemplazar por datos reales si es necesario
   const ahorroHistorico = [
     { fecha: '01/07', cantidad: 200 },
     { fecha: '15/07', cantidad: 400 },
@@ -17,22 +20,20 @@ import MetaAhorro from '../components/dashboard/MetaAhorro';
     { fecha: '01/09', cantidad: 1200 },
   ];
 
+
 export default function Dashboard() {
-  const diasRestantes = getDiasRestantes(mockUser.ahorro.fechaLimite);
+  const [user, setUser] = useState(null);
   const [mesSeleccionado, setMesSeleccionado] = useState(() => {
     const hoy = new Date();
     return hoy.toISOString().slice(0, 7);
   });
-  const tieneIngresoFijo = mockUser.ingreso.tipo === 'fijo';
-  const tieneIngresoVariable = mockUser.ingreso.tipo === 'variable';
-  const ingresoTotal = tieneIngresoFijo
-    ? (mockUser.ingreso.montoTotal ?? 0)
-    : mockUser.ingreso.montoTotal;
-  const gastoFijoTotal = mockUser.gastosFijos.reduce((acc, g) => acc + g.monto, 0);
-  const ahorro = mockUser.ahorro.acumulado;
-  const sobranteParaGastar = ingresoTotal - gastoFijoTotal - ahorro;
-
-  // Datos simulados para el grafico
+  // Simulados, reemplazar por datos reales si se conectan endpoints
+  const [ingresoTotal] = useState(1200);
+  const [gastoFijoTotal] = useState(800);
+  const [ahorro] = useState(200);
+  const [sobranteParaGastar] = useState(200);
+  const [diasRestantes] = useState(10);
+  const [tieneIngresoVariable] = useState(true);
   const estadisticasMensuales = [
     { mes: 'Jul', ingreso: 1200, gasto: 800 },
     { mes: 'Ago', ingreso: 1500, gasto: 950 },
@@ -48,6 +49,9 @@ export default function Dashboard() {
       navigate('/login');
       return;
     }
+    UserApi.me(token)
+      .then(data => setUser(data))
+      .catch(() => setUser(null));
     const timeout = scheduleTokenLogout(token, () => {
       localStorage.removeItem('token');
       navigate('/login');
@@ -58,29 +62,20 @@ export default function Dashboard() {
     navigate('/ingresos-variables');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
 
   return (
-    <main className=" text-black bg-gray-50 p-6">
+    <>
+      <Navbar />
+      <main className=" text-black bg-gray-50 p-6">
       <header>
-        <div className="flex justify-end mb-2">
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition"
-          >
-            Cerrar sesión
-          </button>
-        </div>
+        
         <section className="flex items-center gap-3 mb-2">
           <img src="/calendario.png" alt="Calendario" className="w-20 h-20" />
           <h1 >Resumen Financiero</h1>
         </section>
         <div className="flex flex-col content-center md:flex-row md:items-center md:justify-center gap-4 mb-4">
           <div className="flex gap-4 flex-col md:flex-row">
-            <h2 >Bienvenida, {mockUser.nombre}</h2>
+            <h2 >Bienvenido, {user ? user.name : '...'}</h2>
             <SelectorMesBusqueda mesSeleccionado={mesSeleccionado} setMesSeleccionado={setMesSeleccionado} />
           </div>
         </div>
@@ -148,6 +143,7 @@ export default function Dashboard() {
 
       <DetalleIngresosGastos estadisticasMensuales={estadisticasMensuales} />
       <MetaAhorro ahorroHistorico={ahorroHistorico} />
-    </main>
+      </main>
+    </>
   );
 }

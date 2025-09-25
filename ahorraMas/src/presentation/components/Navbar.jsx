@@ -6,7 +6,7 @@ export default function Navbar() {
       <div className="font-bold text-xl text-white">AHORRA-MÁS</div>
       <ul className="flex space-x-4 p-2">
         <li>
-          <Link to="/" className="!text-white font-bold hover:underline">Resumen</Link>
+          <Link to="/dashboard" className="!text-white font-bold hover:underline">Resumen</Link>
         </li>
         <li>
           <Link to="/gastos" className="!text-white font-bold hover:underline">Gastos Fijos</Link>
