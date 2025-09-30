@@ -34,7 +34,7 @@ export default function Navbar() {
           <Link to="/dashboard" className="block !text-white font-bold hover:underline px-4 py-2" onClick={() => setOpen(false)}>Resumen</Link>
         </li>
         <li className="my-2 sm:my-0">
-          <Link to="/transacciones" className="block !text-white font-bold hover:underline px-4 py-2" onClick={() => setOpen(false)}>Transacciones</Link>
+          <Link to="/transacciones" className="block !text-white font-bold hover:underline px-4 py-2" onClick={() => setOpen(false)}>Historial</Link>
         </li>
         <li className="my-2 sm:my-0">
           <Link to="/gastos" className="block !text-white font-bold hover:underline px-4 py-2" onClick={() => setOpen(false)}>Gastos Fijos</Link>
