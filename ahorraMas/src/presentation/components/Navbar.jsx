@@ -1,8 +1,18 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    setOpen(false);
+    
+    navigate('/');
+  };
   return (
     <nav className="bg-teal-900 px-4 py-3 shadow flex items-center justify-between relative" aria-label="Navegación principal">
       <div className="font-bold text-xl text-white">AHORRA-MÁS</div>
@@ -24,13 +34,21 @@ export default function Navbar() {
           <Link to="/dashboard" className="block !text-white font-bold hover:underline px-4 py-2" onClick={() => setOpen(false)}>Resumen</Link>
         </li>
         <li className="my-2 sm:my-0">
+          <Link to="/transacciones" className="block !text-white font-bold hover:underline px-4 py-2" onClick={() => setOpen(false)}>Transacciones</Link>
+        </li>
+        <li className="my-2 sm:my-0">
           <Link to="/gastos" className="block !text-white font-bold hover:underline px-4 py-2" onClick={() => setOpen(false)}>Gastos Fijos</Link>
         </li>
         <li className="my-2 sm:my-0">
           <Link to="/meta" className="block !text-white font-bold hover:underline px-4 py-2" onClick={() => setOpen(false)}>Meta de Ahorro</Link>
         </li>
         <li className="my-2 sm:my-0">
-          <Link to="/" className="block !text-white font-bold hover:underline px-4 py-2" onClick={() => setOpen(false)}>Salir</Link>
+          <button 
+            onClick={handleLogout}
+            className="block !text-white font-bold hover:underline px-4 py-2 text-left w-full"
+          >
+            Cerrar Sesión
+          </button>
         </li>
       </ul>
     </nav>

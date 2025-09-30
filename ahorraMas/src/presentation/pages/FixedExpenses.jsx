@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import mockUser from '../../infrastructure/api/mockUser.json';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import SelectorMesBusqueda from '../components/fixedExpenses/SelectorMesBusqueda';
 import FormGastoFijo from '../components/fixedExpenses/FormGastoFijo';
 import TablaGastosFijos from '../components/fixedExpenses/TablaGastosFijos';
+import { ScheduleTransactionApi } from '../../infrastructure/api/scheduleTransactionApi';
+import { CategoryApi } from '../../infrastructure/api/categoryApi';
 
 export default function FixedExpenses() {
   const [showForm, setShowForm] = useState(false);
@@ -11,7 +12,63 @@ export default function FixedExpenses() {
     const hoy = new Date();
     return hoy.toISOString().slice(0, 7);
   });
-  const gastosFijos = mockUser.gastosFijos;
+  const [gastosFijos, setGastosFijos] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    await Promise.all([
+      loadScheduledTransactions(),
+      loadCategories()
+    ]);
+  };
+
+  const loadCategories = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const data = await CategoryApi.list(token);
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+      setCategories([]);
+    }
+  };
+
+  const loadScheduledTransactions = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (token) {
+        const data = await ScheduleTransactionApi.list(token);
+        // Filtrar solo los gastos (tipo 'egreso')
+        const expenseTransactions = data.filter(transaction => 
+          transaction.tipo === 'egreso' || transaction.type === 'expense'
+        );
+        
+        // Mapear las transacciones con los nombres de categoría
+        const transactionsWithCategories = expenseTransactions.map(transaction => {
+          const category = categories.find(cat => cat.id === transaction.categoryId);
+          return {
+            ...transaction,
+            category: category ? { name: category.name } : null
+          };
+        });
+        
+        setGastosFijos(transactionsWithCategories);
+      }
+    } catch (error) {
+      console.error('Error al cargar transacciones programadas:', error);
+      setGastosFijos([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -58,10 +115,20 @@ export default function FixedExpenses() {
               >
               </button>
             </div>
-            <FormGastoFijo onSubmit={e => { e.preventDefault();  }} />
+            <FormGastoFijo onGastoCreated={() => {
+              loadData();
+              setShowForm(false);
+            }} />
           </div>
         )}
-        <TablaGastosFijos gastos={gastosFijos} />
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700"></div>
+            <span className="ml-2">Cargando gastos fijos...</span>
+          </div>
+        ) : (
+          <TablaGastosFijos gastos={gastosFijos} onGastoUpdated={loadData} />
+        )}
       </section>
       </main>
     </>

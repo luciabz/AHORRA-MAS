@@ -2,21 +2,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const carouselData = [
+  const carouselData = [
   {
-    title: 'Visualiza tu balance',
-    desc: 'Consulta tu balance mensual, ingresos, gastos y sobrante de forma clara y visual.',
-    img: '/public/carrusel-balance.avif'
+    title: 'Control tu balance',
+    desc: 'Visualiza ingresos y gastos con claridad',
+    img: '/carrusel-balance.avif'
   },
   {
-    title: 'Define metas de ahorro',
-    desc: 'Establece objetivos y sigue tu progreso para lograr tus sueños financieros.',
-    img: '/public/carrusel-metas.webp'
-  },
-  {
-    title: 'Controla tus gastos',
-    desc: 'Registra gastos fijos y variables, identifica oportunidades para ahorrar más.',
-    img: '/public/carrusel-gastos.jpg'
+    title: 'Crea metas',
+    desc: 'Define objetivos financieros alcanzables',
+    img: '/carrusel-metas.webp'
   }
 ];
 
@@ -55,7 +50,7 @@ export default function Welcome() {
           <button className="bg-green-700 text-white px-6 sm:px-8 py-3 rounded-xl text-base sm:text-lg font-bold shadow hover:bg-green-800 transition mb-4 w-full sm:w-auto" onClick={() => navigate('/register')}>¡Comienza a ahorrar!</button>
         </div>
         <div className="flex-1 flex justify-center w-full ">
-          <img src="/public/hero-finanzas.webp" alt="Finanzas personales" className="xs:w-64 xs:h-64 sm:w-80 sm:h-80 lg:w-[420px] lg:h-[420px] xl:w-7xl xl:h-7xl object-contain drop-shadow-xl rounded-2xl" />
+          <img src="/hero-finanzas.webp" alt="Finanzas personales" className="xs:w-64 xs:h-64 sm:w-80 sm:h-80 lg:w-[420px] lg:h-[420px] xl:w-7xl xl:h-7xl object-contain drop-shadow-xl rounded-2xl" />
         </div>
       </section>
 
