@@ -1,6 +1,6 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
-import TransactionManager from '../components/historial/TransactionManager';
+import TransactionManager from '../components/transacciones/TransactionManager';
 
 export default function Transactions() {
   return (
