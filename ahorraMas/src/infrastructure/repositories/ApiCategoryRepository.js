@@ -80,9 +80,17 @@ export class ApiCategoryRepository extends CategoryRepository {
     try {
       const token = this._getAuthToken();
       const response = await this.categoryApi.list(token);
-      return response.map(item => this._mapApiToModel(item));
+      
+      if (response && response.length > 0) {
+        return response.map(item => this._mapApiToModel(item));
+      }
+      
+      // Si no hay categorías del backend, devolver categorías básicas
+      return this._getDefaultCategories();
     } catch (error) {
-      this._handleApiError(error, 'Error obteniendo categorías');
+      console.warn('No se pudieron obtener categorías del backend:', error);
+      // Devolver categorías por defecto en caso de error
+      return this._getDefaultCategories();
     }
   }
 
@@ -159,6 +167,67 @@ export class ApiCategoryRepository extends CategoryRepository {
       throw new Error('Token de autenticación no encontrado');
     }
     return token;
+  }
+
+  _getDefaultCategories() {
+    return [
+      this._mapApiToModel({
+        id: 'cat-salary',
+        name: 'Salario',
+        type: 'income',
+        userId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }),
+      this._mapApiToModel({
+        id: 'cat-rent',
+        name: 'Alquiler',
+        type: 'expense',
+        userId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }),
+      this._mapApiToModel({
+        id: 'cat-food',
+        name: 'Alimentación',
+        type: 'expense',
+        userId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }),
+      this._mapApiToModel({
+        id: 'cat-savings',
+        name: 'Ahorro',
+        type: 'expense',
+        userId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }),
+      this._mapApiToModel({
+        id: 'cat-freelance',
+        name: 'Freelance',
+        type: 'income',
+        userId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }),
+      this._mapApiToModel({
+        id: 'cat-services',
+        name: 'Servicios',
+        type: 'expense',
+        userId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }),
+      this._mapApiToModel({
+        id: 'cat-transport',
+        name: 'Transporte',
+        type: 'expense',
+        userId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+    ];
   }
 
   _handleApiError(error, defaultMessage) {

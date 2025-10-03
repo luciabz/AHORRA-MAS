@@ -1,7 +1,7 @@
 import { 
-  CreateScheduleTransactionDto, 
-  UpdateScheduleTransactionDto 
-} from '../dto/ScheduleTransactionDto.js';
+  CreateScheduleTransactionDTO, 
+  UpdateScheduleTransactionDTO 
+} from '../dto/ScheduleTransactionDTO.js';
 import { ScheduleTransactionRepository } from '../../domain/repositories/ScheduleTransactionRepository.js';
 
 /**
@@ -23,7 +23,7 @@ export class ScheduleTransactionUseCases {
   async createScheduleTransaction(scheduleTransactionData) {
     try {
       // Validar datos de entrada
-      const createDto = new CreateScheduleTransactionDto(scheduleTransactionData);
+      const createDto = new CreateScheduleTransactionDTO(scheduleTransactionData);
       const validationErrors = createDto.validate();
       
       if (validationErrors.length > 0) {
@@ -170,7 +170,7 @@ export class ScheduleTransactionUseCases {
       }
 
       // Validar datos de actualización
-      const updateDto = new UpdateScheduleTransactionDto(updateData);
+      const updateDto = new UpdateScheduleTransactionDTO(updateData);
       const validationErrors = updateDto.validate();
       
       if (validationErrors.length > 0) {
@@ -331,7 +331,7 @@ export class ScheduleTransactionUseCases {
    */
   async validateScheduleConfiguration(scheduleData) {
     try {
-      const createDto = new CreateScheduleTransactionDto(scheduleData);
+      const createDto = new CreateScheduleTransactionDTO(scheduleData);
       const validationErrors = createDto.validate();
       
       // Validaciones adicionales de negocio

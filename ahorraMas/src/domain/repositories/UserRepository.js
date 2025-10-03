@@ -43,6 +43,10 @@ export class UserRepository {
     throw new Error('Método findAll() debe ser implementado');
   }
 
+  getCurrentUserId() {
+    throw new Error('Método getCurrentUserId() debe ser implementado');
+  }
+
   // Validaciones que pueden ser comunes
   validateUserData(userData) {
     const errors = [];

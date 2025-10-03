@@ -1,7 +1,6 @@
-import { 
-  CreateGoalDto, 
-  UpdateGoalDto 
-} from '../dto/GoalDto.js';
+import {  CreateGoalDTO, 
+  UpdateGoalDTO 
+} from '../dto/GoalDTO.js';
 import { GoalRepository } from '../../domain/repositories/GoalRepository.js';
 
 /**
@@ -23,7 +22,7 @@ export class GoalUseCases {
   async createGoal(goalData) {
     try {
       // Validar datos de entrada
-      const createDto = new CreateGoalDto(goalData);
+      const createDto = new CreateGoalDTO(goalData);
       const validationErrors = createDto.validate();
       
       if (validationErrors.length > 0) {
@@ -203,7 +202,7 @@ export class GoalUseCases {
       }
 
       // Validar datos de actualización
-      const updateDto = new UpdateGoalDto(updateData);
+      const updateDto = new UpdateGoalDTO(updateData);
       const validationErrors = updateDto.validate();
       
       if (validationErrors.length > 0) {
@@ -370,7 +369,7 @@ export class GoalUseCases {
    */
   async validateGoalData(goalData, isUpdate = false) {
     try {
-      const dto = isUpdate ? new UpdateGoalDto(goalData) : new CreateGoalDto(goalData);
+      const dto = isUpdate ? new UpdateGoalDTO(goalData) : new CreateGoalDTO(goalData);
       const validationErrors = dto.validate();
       
       // Validaciones adicionales de negocio

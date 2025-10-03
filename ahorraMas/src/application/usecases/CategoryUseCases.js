@@ -193,3 +193,55 @@ export class CreateDefaultCategoriesUseCase {
     return createdCategories;
   }
 }
+
+/**
+ * CategoryUseCases - Clase principal que agrupa todos los casos de uso de categorías
+ */
+export class CategoryUseCases {
+  constructor(categoryRepository, transactionRepository = null) {
+    this.categoryRepository = categoryRepository;
+    this.transactionRepository = transactionRepository;
+    
+    // Inicializar casos de uso
+    this.createCategory = new CreateCategoryUseCase(categoryRepository);
+    this.getCategories = new GetCategoriesUseCase(categoryRepository);
+    this.updateCategory = new UpdateCategoryUseCase(categoryRepository);
+    this.deleteCategory = new DeleteCategoryUseCase(categoryRepository, transactionRepository);
+    this.createDefaultCategories = new CreateDefaultCategoriesUseCase(categoryRepository);
+  }
+
+  /**
+   * Crear una nueva categoría
+   */
+  async create(userId, categoryData) {
+    return await this.createCategory.execute(userId, categoryData);
+  }
+
+  /**
+   * Obtener categorías del usuario
+   */
+  async list(userId, type = null) {
+    return await this.getCategories.execute(userId, type);
+  }
+
+  /**
+   * Actualizar una categoría
+   */
+  async update(userId, categoryId, updateData) {
+    return await this.updateCategory.execute(userId, categoryId, updateData);
+  }
+
+  /**
+   * Eliminar una categoría
+   */
+  async delete(userId, categoryId) {
+    return await this.deleteCategory.execute(userId, categoryId);
+  }
+
+  /**
+   * Crear categorías por defecto para un nuevo usuario
+   */
+  async setupDefaultCategories(userId) {
+    return await this.createDefaultCategories.execute(userId);
+  }
+}

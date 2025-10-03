@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { ScheduleTransactionRepository } from '../../domain/repositories/ScheduleTransactionRepository.js';
 import { ScheduleTransaction } from '../../domain/models/ScheduleTransaction.js';
 import { ScheduleTransactionApi } from '../api/scheduleTransactionApi.js';
@@ -11,6 +12,7 @@ export class ApiScheduleTransactionRepository extends ScheduleTransactionReposit
   constructor() {
     super();
     this.scheduleTransactionApi = ScheduleTransactionApi;
+    this.endpoint = `${import.meta.env.VITE_API_URL}/api/v1/schedule-transaction`;
   }
 
   /**
@@ -30,23 +32,21 @@ export class ApiScheduleTransactionRepository extends ScheduleTransactionReposit
   _mapApiToModel(apiData) {
     if (!apiData) return null;
     
-    return new ScheduleTransaction(
-      apiData.id,
-      apiData.userId,
-      apiData.categoryId,
-      apiData.description,
-      parseFloat(apiData.amount),
-      apiData.type,
-      apiData.frequency,
-      apiData.startDate,
-      apiData.endDate,
-      apiData.isActive,
-      apiData.lastExecutedAt,
-      parseInt(apiData.executionCount) || 0,
-      apiData.maxExecutions ? parseInt(apiData.maxExecutions) : null,
-      apiData.createdAt,
-      apiData.updatedAt
-    );
+    return new ScheduleTransaction({
+      id: apiData.id,
+      userId: apiData.userId,
+      categoryId: apiData.categoryId,
+      description: apiData.description,
+      amount: parseFloat(apiData.amount),
+      type: apiData.type,
+      regularity: apiData.regularity || 'static',
+      periodicity: apiData.periodicity || '30 day',
+      nextOccurrence: apiData.nextOccurrence,
+      endDate: apiData.endDate,
+      status: apiData.status !== undefined ? apiData.status : true,
+      createdAt: apiData.createdAt,
+      updatedAt: apiData.updatedAt
+    });
   }
 
   /**
@@ -116,7 +116,10 @@ export class ApiScheduleTransactionRepository extends ScheduleTransactionReposit
         params: { userId }
       });
       
-      return response.data.map(item => this._mapApiToModel(item));
+      if (response.data && Array.isArray(response.data)) {
+        return response.data.map(item => this._mapApiToModel(item));
+      }
+      return [];
     } catch (error) {
       console.error('Error finding schedule transactions by user ID:', error);
       

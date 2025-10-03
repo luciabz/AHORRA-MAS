@@ -228,3 +228,55 @@ export class GetTransactionStatsUseCase {
     };
   }
 }
+
+/**
+ * TransactionUseCases - Clase principal que agrupa todos los casos de uso de transacciones
+ */
+export class TransactionUseCases {
+  constructor(transactionRepository, categoryRepository = null) {
+    this.transactionRepository = transactionRepository;
+    this.categoryRepository = categoryRepository;
+    
+    // Inicializar casos de uso
+    this.createTransaction = new CreateTransactionUseCase(transactionRepository, categoryRepository);
+    this.getTransactions = new GetTransactionsUseCase(transactionRepository);
+    this.updateTransaction = new UpdateTransactionUseCase(transactionRepository, categoryRepository);
+    this.deleteTransaction = new DeleteTransactionUseCase(transactionRepository);
+    this.getTransactionAnalytics = new GetTransactionStatsUseCase(transactionRepository);
+  }
+
+  /**
+   * Crear una nueva transacción
+   */
+  async create(transactionData) {
+    return await this.createTransaction.execute(transactionData);
+  }
+
+  /**
+   * Obtener transacciones del usuario
+   */
+  async list(userId, filters = {}) {
+    return await this.getTransactions.execute(userId, filters);
+  }
+
+  /**
+   * Actualizar una transacción
+   */
+  async update(userId, transactionId, updateData) {
+    return await this.updateTransaction.execute(userId, transactionId, updateData);
+  }
+
+  /**
+   * Eliminar una transacción
+   */
+  async delete(userId, transactionId) {
+    return await this.deleteTransaction.execute(userId, transactionId);
+  }
+
+  /**
+   * Obtener analíticas de transacciones
+   */
+  async getAnalytics(userId, month = null, year = null) {
+    return await this.getTransactionAnalytics.execute(userId, month, year);
+  }
+}

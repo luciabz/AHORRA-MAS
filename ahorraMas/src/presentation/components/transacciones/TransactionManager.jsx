@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TransactionApi } from '../../../infrastructure/api/transactionApi';
-import { ScheduleTransactionApi } from '../../../infrastructure/api/scheduleTransactionApi';
-import { CategoryApi } from '../../../infrastructure/api/categoryApi';
+import { useTransactions, useCategories } from '../../hooks/useCleanArchitecture';
 import Swal from 'sweetalert2';
 
 import HistoricalTransactions from './HistoricalTransactions';
@@ -10,17 +8,53 @@ import CategoriesManager from './CategoriesManager';
 import TransactionModal from './TransactionModal';
 
 export default function TransactionManager() {
-  const [transactions, setTransactions] = useState([]);
+  // Hooks de Clean Architecture
+  const { 
+    transactions, 
+    loading: transactionLoading, 
+    error: transactionError,
+    loadTransactions,
+    createTransaction: createTransactionUseCase,
+    updateTransaction: updateTransactionUseCase,
+    deleteTransaction: deleteTransactionUseCase,
+    clearError: clearTransactionError
+  } = useTransactions();
+
+  const {
+    categories,
+    loading: categoryLoading,
+    error: categoryError,
+    loadCategories,
+    createCategory: createCategoryUseCase,
+    updateCategory: updateCategoryUseCase,
+    deleteCategory: deleteCategoryUseCase,
+    clearError: clearCategoryError
+  } = useCategories();
+
+  // Estados locales del componente
   const [scheduleTransactions, setScheduleTransactions] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('historicas'); 
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formType, setFormType] = useState('transaction'); 
 
-  const token = localStorage.getItem('token');
+  // Estados combinados
+  const loading = transactionLoading || categoryLoading;
+  const error = transactionError || categoryError;
+
+  // Obtener userId del token (simplificado - en producción usar contexto)
+  const getUserId = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.user_id || payload.id;
+    } catch {
+      return null;
+    }
+  };
 
   const [transactionForm, setTransactionForm] = useState({
     type: 'income',
@@ -53,38 +87,42 @@ export default function TransactionManager() {
 
   const loadData = async () => {
     try {
-      setLoading(true);
-      const [transactionData, scheduleData, categoryData] = await Promise.all([
-        TransactionApi.list(token),
-        ScheduleTransactionApi.list(token),
-        CategoryApi.list(token)
+      const userId = getUserId();
+      if (!userId) {
+        Swal.fire('Error', 'No se pudo obtener el usuario', 'error');
+        return;
+      }
+
+      // Cargar datos usando Clean Architecture
+      await Promise.all([
+        loadTransactions(userId),
+        loadCategories(userId)
+        // TODO: Agregar scheduleTransactions cuando esté implementado
       ]);
-      setTransactions(transactionData);
-      setScheduleTransactions(scheduleData);
-      setCategories(categoryData);
+      
     } catch (error) {
       console.error('Error loading data:', error);
       Swal.fire('Error', 'No se pudieron cargar los datos', 'error');
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleTransactionSubmit = async (e) => {
     e.preventDefault();
     try {
+      const userId = getUserId();
+      const transactionData = { ...transactionForm, userId };
+
       if (editingItem) {
-        const updated = await TransactionApi.update(editingItem.id, transactionForm, token);
-        setTransactions(transactions.map(t => t.id === editingItem.id ? updated : t));
+        await updateTransactionUseCase(editingItem.id, transactionData);
         Swal.fire('Actualizada', 'Transacción actualizada exitosamente', 'success');
       } else {
-        const newTransaction = await TransactionApi.create(transactionForm, token);
-        setTransactions([...transactions, newTransaction]);
+        await createTransactionUseCase(transactionData);
         Swal.fire('Creada', 'Transacción creada exitosamente', 'success');
       }
       resetForm();
     } catch (error) {
-      Swal.fire('Error', 'No se pudo guardar la transacción', 'error');
+      console.error('Error saving transaction:', error);
+      Swal.fire('Error', error.message || 'No se pudo guardar la transacción', 'error');
     }
   };
 
@@ -100,11 +138,12 @@ export default function TransactionManager() {
     
     if (result.isConfirmed) {
       try {
-        await TransactionApi.remove(id, token);
-        setTransactions(transactions.filter(t => t.id !== id));
+        const userId = getUserId();
+        await deleteTransactionUseCase(id, userId);
         Swal.fire('Eliminada', 'Transacción eliminada exitosamente', 'success');
       } catch (error) {
-        Swal.fire('Error', 'No se pudo eliminar la transacción', 'error');
+        console.error('Error deleting transaction:', error);
+        Swal.fire('Error', error.message || 'No se pudo eliminar la transacción', 'error');
       }
     }
   };
@@ -151,20 +190,22 @@ export default function TransactionManager() {
   const handleCategorySubmit = async (e) => {
     e.preventDefault();
     try {
+      const userId = getUserId();
+      const categoryData = { ...categoryForm, userId };
+
       if (editingItem) {
-        const updated = await CategoryApi.update(editingItem.id, categoryForm, token);
-        setCategories(categories.map(c => c.id === editingItem.id ? updated : c));
+        await updateCategoryUseCase(editingItem.id, categoryData);
         Swal.fire('Actualizada', 'Categoría actualizada exitosamente', 'success');
       } else {
-        const newCategory = await CategoryApi.create(categoryForm, token);
-        setCategories([...categories, newCategory]);
+        await createCategoryUseCase(categoryData);
         Swal.fire('Creada', 'Categoría creada exitosamente', 'success');
       }
       setShowCategoryForm(false);
       setEditingItem(null);
       setCategoryForm({ name: '', description: '', type: 'income' });
     } catch (error) {
-      Swal.fire('Error', 'No se pudo guardar la categoría', 'error');
+      console.error('Error saving category:', error);
+      Swal.fire('Error', error.message || 'No se pudo guardar la categoría', 'error');
     }
   };
 
@@ -180,11 +221,12 @@ export default function TransactionManager() {
     
     if (result.isConfirmed) {
       try {
-        await CategoryApi.remove(id, token);
-        setCategories(categories.filter(c => c.id !== id));
+        const userId = getUserId();
+        await deleteCategoryUseCase(id, userId);
         Swal.fire('Eliminada', 'Categoría eliminada exitosamente', 'success');
       } catch (error) {
-        Swal.fire('Error', 'No se pudo eliminar la categoría', 'error');
+        console.error('Error deleting category:', error);
+        Swal.fire('Error', error.message || 'No se pudo eliminar la categoría', 'error');
       }
     }
   };
@@ -275,12 +317,7 @@ export default function TransactionManager() {
         >
           Transacciones Históricas
         </button>
-        <button
-          className={`px-4 py-2 font-semibold ${activeTab === 'programadas' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600'}`}
-          onClick={() => setActiveTab('programadas')}
-        >
-          Transacciones Programadas
-        </button>
+       
         <button
           className={`px-4 py-2 font-semibold ${activeTab === 'categorias' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600'}`}
           onClick={() => setActiveTab('categorias')}

@@ -18,17 +18,20 @@ export class ApiUserRepository extends UserRepository {
   _mapApiToModel(apiData) {
     if (!apiData) return null;
     
-    return new User(
-      apiData.id,
-      apiData.username,
-      apiData.email,
-      apiData.firstName,
-      apiData.lastName,
-      apiData.avatar,
-      apiData.isActive,
-      apiData.createdAt,
-      apiData.updatedAt
-    );
+    const user = new User({
+      id: apiData.id,
+      username: apiData.name || apiData.username, // El backend devuelve 'name'
+      email: apiData.email,
+      firstName: apiData.firstName || '', // El backend no devuelve firstName
+      lastName: apiData.lastName || '',   // El backend no devuelve lastName
+      createdAt: apiData.createdAt,
+      updatedAt: apiData.updatedAt
+    });
+    
+    // Agregar propiedad name para compatibilidad con el Dashboard
+    user.name = apiData.name || user.getFullName() || user.username;
+    
+    return user;
   }
 
   /**
@@ -60,8 +63,13 @@ export class ApiUserRepository extends UserRepository {
 
   async findById(id) {
     try {
-      // Esta funcionalidad podría no estar disponible en UserApi básico
-      // Se implementaría si el backend la soporta
+      const token = this._getAuthToken();
+      const response = await this.userApi.me(token);
+      
+      if (response && (response.id === id || response.id === parseInt(id) || id === 'current')) {
+        return this._mapApiToModel(response);
+      }
+      
       return null;
     } catch (error) {
       this._handleApiError(error, 'Error obteniendo usuario por ID');
@@ -161,6 +169,39 @@ export class ApiUserRepository extends UserRepository {
       return response;
     } catch (error) {
       this._handleApiError(error, 'Error obteniendo estadísticas de usuario');
+    }
+  }
+
+  /**
+   * Obtiene el ID del usuario actual desde el localStorage
+   * En un sistema real, esto se establecería durante el login
+   */
+  async getCurrentUserId() {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        return userId;
+      }
+
+      // Si no hay userId guardado, obtenerlo de la API
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await this.userApi.me(token);
+          if (response && response.id) {
+            // Guardar el userId para futuras consultas
+            localStorage.setItem('userId', response.id.toString());
+            return response.id.toString();
+          }
+        } catch (error) {
+          console.warn('No se pudo obtener ID de usuario desde API:', error);
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('Error obteniendo ID de usuario actual:', error);
+      return null;
     }
   }
 

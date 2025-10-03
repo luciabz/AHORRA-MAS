@@ -8,10 +8,13 @@ import Navbar from '../components/Navbar';
 import SelectorMesBusqueda from '../components/dashboard/SelectorMesBusqueda';
 import DetalleIngresosGastos from '../components/dashboard/DetalleIngresosGastos';
 import MetaAhorro from '../components/dashboard/MetaAhorro';
-import { UserApi } from '../../infrastructure/api/userApi';
-import { TransactionApi } from '../../infrastructure/api/transactionApi';
-import { ScheduleTransactionApi } from '../../infrastructure/api/scheduleTransactionApi';
-import { CategoryApi } from '../../infrastructure/api/categoryApi';
+import { 
+  useTransactions, 
+  useCategories, 
+  useScheduleTransactions, 
+  useUsers,
+  useFinancialAnalysis 
+} from '../hooks/useCleanArchitecture';
 import Swal from 'sweetalert2';
 
 
@@ -25,75 +28,36 @@ import Swal from 'sweetalert2';
 
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
-  const [transactions, setTransactions] = useState([]);
-  const [scheduleTransactions, setScheduleTransactions] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  
+  // Clean Architecture hooks
+  const { user, loading: userLoading } = useUsers();
+  const { transactions, loading: transLoading, createTransaction } = useTransactions();
+  const { scheduleTransactions, loading: scheduleLoading } = useScheduleTransactions();
+  const { categories, loading: categoriesLoading } = useCategories();
+  const { calculateTotals, calculateMonthlyStats, getTransactionsWithCategories } = useFinancialAnalysis();
+  
+  const loading = userLoading || transLoading || scheduleLoading || categoriesLoading;
+  
   const [showSobranteModal, setShowSobranteModal] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState(() => {
     const hoy = new Date();
     return hoy.toISOString().slice(0, 7);
   });
   
-  // Calcular totales basados en transacciones reales y programadas
-  const ingresos = transactions.filter(t => t.type === 'income');
-  const egresos = transactions.filter(t => t.type === 'expense');
-  const ingresosProgram = scheduleTransactions.filter(t => t.type === 'income' && t.status);
-  const egresosProgram = scheduleTransactions.filter(t => t.type === 'expense' && t.status);
-  
-  const ingresoTotal = ingresos.reduce((sum, t) => sum + parseFloat(t.amount), 0) + 
-                      ingresosProgram.reduce((sum, t) => sum + parseFloat(t.amount), 0);
-  const gastoFijoTotal = egresos.filter(t => t.regularity === 'static').reduce((sum, t) => sum + parseFloat(t.amount), 0) +
-                        egresosProgram.filter(t => t.regularity === 'static').reduce((sum, t) => sum + parseFloat(t.amount), 0);
-  const gastoVariableTotal = egresos.filter(t => t.regularity === 'variable').reduce((sum, t) => sum + parseFloat(t.amount), 0) +
-                            egresosProgram.filter(t => t.regularity === 'variable').reduce((sum, t) => sum + parseFloat(t.amount), 0);
-  const ahorro = 200; // Este valor puede venir de otra API o cálculo
-  const sobranteParaGastar = ingresoTotal - gastoFijoTotal - gastoVariableTotal - ahorro;
-  const diasRestantes = 10; // Calcular según fecha actual
-  const tieneIngresoVariable = [...ingresos, ...ingresosProgram].some(t => t.regularity === 'variable');
-  // Calcular estadísticas mensuales basadas en transacciones reales y programadas
-  const calcularEstadisticasMensuales = () => {
-    const meses = {};
-    
-    // Procesar transacciones históricas
-    transactions.forEach(transaction => {
-      const fecha = new Date(transaction.createdAt);
-      const mesKey = fecha.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
-      
-      if (!meses[mesKey]) {
-        meses[mesKey] = { mes: mesKey, ingreso: 0, gasto: 0 };
-      }
-      
-      if (transaction.type === 'income') {
-        meses[mesKey].ingreso += parseFloat(transaction.amount);
-      } else if (transaction.type === 'expense') {
-        meses[mesKey].gasto += parseFloat(transaction.amount);
-      }
-    });
-    
-    // Añadir transacciones programadas para el mes actual
-    const mesActual = new Date().toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
-    if (!meses[mesActual]) {
-      meses[mesActual] = { mes: mesActual, ingreso: 0, gasto: 0 };
-    }
-    
-    scheduleTransactions.forEach(schedule => {
-      if (schedule.status) {
-        if (schedule.type === 'income') {
-          meses[mesActual].ingreso += parseFloat(schedule.amount);
-        } else if (schedule.type === 'expense') {
-          meses[mesActual].gasto += parseFloat(schedule.amount);
-        }
-      }
-    });
-    
-    return Object.values(meses).slice(-3); // Últimos 3 meses
-  };
-  
-  const estadisticasMensuales = calcularEstadisticasMensuales();
+  // Usar análisis financiero de Clean Architecture
+  const {
+    ingresoTotal,
+    gastoFijoTotal,
+    gastoVariableTotal,
+    ahorro,
+    sobranteParaGastar,
+    diasRestantes,
+    tieneIngresoVariable
+  } = calculateTotals();
+  // Usar estadísticas de Clean Architecture
+  const estadisticasMensuales = calculateMonthlyStats();
 
-  const navigate = useNavigate();
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token || isTokenExpired(token)) {
@@ -102,68 +66,87 @@ export default function Dashboard() {
       return;
     }
     
-    // Cargar datos del usuario, transacciones, transacciones programadas y categorías
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [userData, transactionData, scheduleData, categoryData] = await Promise.all([
-          UserApi.me(token),
-          TransactionApi.list(token),
-          ScheduleTransactionApi.list(token),
-          CategoryApi.list(token)
-        ]);
-        setUser(userData);
-        setTransactions(transactionData);
-        setScheduleTransactions(scheduleData);
-        setCategories(categoryData);
-      } catch (error) {
-        console.error('Error loading data:', error);
-        setUser(null);
-        setTransactions([]);
-        setScheduleTransactions([]);
-        setCategories([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadData();
-    
     const timeout = scheduleTokenLogout(token, () => {
       localStorage.removeItem('token');
       navigate('/login');
     });
     return () => timeout && clearTimeout(timeout);
   }, [navigate]);
+
+  // Log para debug de datos
+  useEffect(() => {
+    console.log('📈 Dashboard - Datos actualizados:', {
+      user: user?.name,
+      transactions: transactions.length,
+      categories: categories.length,
+      scheduleTransactions: scheduleTransactions.length,
+      loading: { userLoading, transLoading, scheduleLoading, categoriesLoading },
+      totales: { ingresoTotal, gastoFijoTotal, gastoVariableTotal, ahorro, sobranteParaGastar }
+    });
+    
+    if (transactions.length > 0) {
+      console.log('📊 Transacciones detalladas:', transactions.map(t => ({
+        id: t.id,
+        desc: t.description,
+        amount: t.amount,
+        type: t.type,
+        regularity: t.regularity
+      })));
+    }
+    
+    if (categories.length > 0) {
+      console.log('🏷️ Categorías detalladas:', categories.map(c => ({
+        id: c.id,
+        name: c.name,
+        type: c.type
+      })));
+    }
+  }, [user, transactions, categories, scheduleTransactions, ingresoTotal, gastoFijoTotal, gastoVariableTotal, ahorro, sobranteParaGastar, userLoading, transLoading, scheduleLoading, categoriesLoading]);
+
+  // Función para cargar datos manualmente (para debugging)
+  const loadDataManually = async () => {
+    try {
+      console.log('🔄 Carga manual iniciada...');
+      
+      // Obtener userId
+      const userRepository = container.getRepository('user');
+      const userId = await userRepository.getCurrentUserId();
+      console.log('👤 User ID obtenido:', userId);
+      
+      if (userId) {
+        // Cargar transacciones manualmente
+        const transactionRepo = container.getRepository('transaction');
+        const transactionsResult = await transactionRepo.findByUserId(userId);
+        console.log('✅ Transacciones cargadas manualmente:', transactionsResult);
+        
+        // Cargar categorías manualmente  
+        const categoryRepo = container.getRepository('category');
+        const categoriesResult = await categoryRepo.findByUserId(userId);
+        console.log('✅ Categorías cargadas manualmente:', categoriesResult);
+      }
+    } catch (error) {
+      console.error('❌ Error en carga manual:', error);
+    }
+  };
+
   const goToVariableIncome = () => {
     navigate('/ingresos-variables');
   };
 
   const handleIngresosVariables = async () => {
-    // Filtrar ingresos variables del mes actual (solo los que tienen regularity: 'variable')
+    // Usar Clean Architecture para obtener ingresos variables del mes actual
     const mesActual = new Date().getMonth();
     const añoActual = new Date().getFullYear();
     
-    const ingresosVariablesDelMes = transactions.filter(transaction => {
+    const ingresosConCategorias = getTransactionsWithCategories('income', 'variable').filter(transaction => {
       const fechaTransaccion = new Date(transaction.createdAt);
-      return transaction.type === 'income' && 
-             transaction.regularity === 'variable' &&
-             fechaTransaccion.getMonth() === mesActual &&
+      return fechaTransaccion.getMonth() === mesActual &&
              fechaTransaccion.getFullYear() === añoActual;
     });
 
-    console.log('Ingresos variables encontrados:', ingresosVariablesDelMes);
+    console.log('Ingresos variables encontrados:', ingresosConCategorias);
 
-    const totalIngresosVariables = ingresosVariablesDelMes.reduce((sum, t) => sum + parseFloat(t.amount), 0);
-
-    // Mapear ingresos con nombres de categorías
-    const ingresosConCategorias = ingresosVariablesDelMes.map(ingreso => {
-      const categoria = categories.find(cat => cat.id === ingreso.categoryId);
-      return {
-        ...ingreso,
-        categoryName: categoria ? categoria.name : 'Sin categoría'
-      };
-    });
+    const totalIngresosVariables = ingresosConCategorias.reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
     // Crear lista HTML de ingresos variables
     const listaIngresos = ingresosConCategorias.length > 0 
@@ -287,7 +270,7 @@ export default function Dashboard() {
           regularity: 'variable'
         };
 
-        await TransactionApi.create(newTransaction, token);
+        await createTransaction(newTransaction);
         
         Swal.fire({
           title: '¡Ingreso variable agregado!',
@@ -295,14 +278,6 @@ export default function Dashboard() {
           icon: 'success',
           confirmButtonColor: '#16a34a'
         });
-
-        // Recargar los datos para actualizar el dashboard
-        const [updatedTransactions, updatedScheduleData] = await Promise.all([
-          TransactionApi.list(token),
-          ScheduleTransactionApi.list(token)
-        ]);
-        setTransactions(updatedTransactions);
-        setScheduleTransactions(updatedScheduleData);
 
       } catch (error) {
         console.error('Error al guardar ingreso variable:', error);
@@ -388,7 +363,7 @@ export default function Dashboard() {
           regularity: 'extra' // Es un ingreso extra del sobrante
         };
 
-        await TransactionApi.create(newTransaction, token);
+        await createTransaction(newTransaction);
         
         Swal.fire({
           title: '¡Sobrante agregado!',
@@ -396,14 +371,6 @@ export default function Dashboard() {
           icon: 'success',
           confirmButtonColor: '#16a34a'
         });
-
-        // Recargar los datos para actualizar el dashboard
-        const [updatedTransactions, updatedScheduleData] = await Promise.all([
-          TransactionApi.list(token),
-          ScheduleTransactionApi.list(token)
-        ]);
-        setTransactions(updatedTransactions);
-        setScheduleTransactions(updatedScheduleData);
 
       } catch (error) {
         console.error('Error al guardar ahorro:', error);
@@ -423,6 +390,7 @@ export default function Dashboard() {
       <Navbar />
 
       <main className="text-black bg-gray-50 p-2 sm:p-4 md:p-6">
+       
         <header>
           <section className="flex flex-col sm:flex-row items-center gap-3 mb-2">
             <img src="/calendario.png" alt="Calendario" className="w-16 h-16 sm:w-20 sm:h-20" />

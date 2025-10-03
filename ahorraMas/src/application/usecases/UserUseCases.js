@@ -154,3 +154,46 @@ export class UpdateUserUseCase {
     return User.fromApiData(updatedUser);
   }
 }
+
+/**
+ * UserUseCases - Clase principal que agrupa todos los casos de uso de usuarios
+ */
+export class UserUseCases {
+  constructor(userRepository) {
+    this.userRepository = userRepository;
+    
+    // Inicializar casos de uso
+    this.createUser = new CreateUserUseCase(userRepository);
+    this.loginUser = new AuthenticateUserUseCase(userRepository);
+    this.getUserProfile = new GetUserUseCase(userRepository);
+    this.updateUserProfile = new UpdateUserUseCase(userRepository);
+  }
+
+  /**
+   * Crear un nuevo usuario
+   */
+  async register(userData) {
+    return await this.createUser.execute(userData);
+  }
+
+  /**
+   * Iniciar sesión de usuario
+   */
+  async login(credentials) {
+    return await this.loginUser.execute(credentials);
+  }
+
+  /**
+   * Obtener perfil de usuario
+   */
+  async getProfile(userId) {
+    return await this.getUserProfile.execute(userId);
+  }
+
+  /**
+   * Actualizar perfil de usuario
+   */
+  async updateProfile(userId, updateData) {
+    return await this.updateUserProfile.execute(userId, updateData);
+  }
+}
