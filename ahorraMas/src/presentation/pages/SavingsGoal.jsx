@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useGoals } from '../hooks/useCleanArchitecture';
 import Navbar from '../components/Navbar';
+import { useGoals } from '../hooks/useGoals';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 
@@ -11,10 +11,10 @@ export default function SavingsGoal() {
     goals, 
     loading, 
     error: goalError, 
-    createGoal, 
-    updateGoal, 
-    deleteGoal,
-    getGoalById 
+    addGoal, 
+    editGoal, 
+    removeGoal,
+    getGoalDetails 
   } = useGoals();
   
   const [form, setForm] = useState({ title: '', description: '', targetAmount: '', deadline: '' });
@@ -25,12 +25,21 @@ export default function SavingsGoal() {
     e.preventDefault();
     setSuccess('');
     try {
-      await createGoal(form);
-      setForm({ title: '', description: '', targetAmount: '', deadline: '' });
-      setSuccess('Meta creada exitosamente');
-      MySwal.fire({ icon: 'success', title: 'Meta creada', text: 'La meta fue creada exitosamente.' });
+      console.log('🎯 SavingsGoal: Creando meta con datos:', form);
+      const result = await addGoal(form);
+      console.log('🎯 SavingsGoal: Resultado de addGoal:', result);
+      
+      if (result && result.success) {
+        setForm({ title: '', description: '', targetAmount: '', deadline: '' });
+        setSuccess('Meta creada exitosamente');
+        MySwal.fire({ icon: 'success', title: 'Meta creada', text: 'La meta fue creada exitosamente.' });
+      } else {
+        console.error('❌ SavingsGoal: Error en resultado:', result);
+        MySwal.fire({ icon: 'error', title: 'Error', text: result?.message || 'No se pudo crear la meta.' });
+      }
     } catch (err) {
-      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la meta.' });
+      console.error('❌ SavingsGoal: Excepción:', err);
+      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la meta: ' + err.message });
     }
   };
 
@@ -48,10 +57,14 @@ export default function SavingsGoal() {
     });
     if (result.isConfirmed) {
       try {
-        await deleteGoal(id);
-        MySwal.fire('Eliminada', 'La meta fue eliminada.', 'success');
-      } catch {
-        MySwal.fire('Error', 'No se pudo eliminar la meta.', 'error');
+        const result = await removeGoal(id);
+        if (result && result.success) {
+          MySwal.fire('Eliminada', 'La meta fue eliminada.', 'success');
+        } else {
+          MySwal.fire('Error', result?.message || 'No se pudo eliminar la meta.', 'error');
+        }
+      } catch (err) {
+        MySwal.fire('Error', 'No se pudo eliminar la meta: ' + err.message, 'error');
       }
     }
   };
@@ -59,7 +72,8 @@ export default function SavingsGoal() {
   // Mostrar detalle en modal
   const handleShowDetail = async id => {
     try {
-      const data = await getGoalById(id);
+      const result = await getGoalDetails(id);
+      const data = result.success ? result.data : result;
       MySwal.fire({
         title: <span>Detalle de la meta</span>,
         html: (
@@ -118,10 +132,14 @@ export default function SavingsGoal() {
     }).then(async result => {
       if (result.isConfirmed) {
         try {
-          await updateGoal(goal.id, result.value);
-          MySwal.fire('Actualizada', 'La meta fue actualizada.', 'success');
-        } catch {
-          MySwal.fire('Error', 'No se pudo actualizar la meta.', 'error');
+          const updateResult = await editGoal(goal.id, result.value);
+          if (updateResult && updateResult.success) {
+            MySwal.fire('Actualizada', 'La meta fue actualizada.', 'success');
+          } else {
+            MySwal.fire('Error', updateResult?.message || 'No se pudo actualizar la meta.', 'error');
+          }
+        } catch (err) {
+          MySwal.fire('Error', 'No se pudo actualizar la meta: ' + err.message, 'error');
         }
       }
     });

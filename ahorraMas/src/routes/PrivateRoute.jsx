@@ -1,26 +1,22 @@
-import React, { useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
-import { isTokenExpired, scheduleTokenLogout } from '../domain/services/session';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuthContext } from '../presentation/contexts';
 
 export default function PrivateRoute({ children }) {
-  const token = localStorage.getItem('token');
-  const navigate = useNavigate();
+  const { isAuthenticated, loading } = useAuthContext();
 
-  useEffect(() => {
-    if (!token || isTokenExpired(token)) {
-      localStorage.removeItem('token');
-      navigate('/login');
-      return;
-    }
-    const timeout = scheduleTokenLogout(token, () => {
-      localStorage.removeItem('token');
-      navigate('/login');
-    });
-    return () => timeout && clearTimeout(timeout);
-  }, [token, navigate]);
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-lg">Cargando...</div>
+      </div>
+    );
+  }
 
-  if (!token || isTokenExpired(token))
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
+  }
+
   return children;
 }
 

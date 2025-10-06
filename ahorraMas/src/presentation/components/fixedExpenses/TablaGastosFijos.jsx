@@ -1,5 +1,4 @@
 import React from 'react';
-import { ScheduleTransactionApi } from '../../../infrastructure/api/scheduleTransactionApi';
 import Swal from 'sweetalert2';
 
 export default function TablaGastosFijos({ gastos, onGastoUpdated }) {

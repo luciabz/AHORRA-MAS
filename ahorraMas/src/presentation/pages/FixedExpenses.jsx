@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import Navbar from '../components/Navbar';
 import SelectorMesBusqueda from '../components/fixedExpenses/SelectorMesBusqueda';
 import FormGastoFijo from '../components/fixedExpenses/FormGastoFijo';
 import TablaGastosFijos from '../components/fixedExpenses/TablaGastosFijos';
-import { ScheduleTransactionApi } from '../../infrastructure/api/scheduleTransactionApi';
-import { CategoryApi } from '../../infrastructure/api/categoryApi';
+import { useScheduledTransactions } from '../hooks/useScheduledTransactions';
+import { useCategories } from '../hooks/useCategories';
 
 export default function FixedExpenses() {
   const [showForm, setShowForm] = useState(false);
@@ -14,62 +14,40 @@ export default function FixedExpenses() {
     const hoy = new Date();
     return hoy.toISOString().slice(0, 7);
   });
-  const [gastosFijos, setGastosFijos] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Usar los hooks personalizados
+  const { 
+    scheduledTransactions, 
+    loading: scheduledLoading, 
+    error: scheduledError,
+    addScheduledTransaction 
+  } = useScheduledTransactions();
+  
+  const { 
+    categories, 
+    loading: categoriesLoading, 
+    error: categoriesError 
+  } = useCategories();
 
-  const loadData = async () => {
-    await Promise.all([
-      loadScheduledTransactions(),
-      loadCategories()
-    ]);
-  };
+  const loading = scheduledLoading || categoriesLoading;
+  
+  // Filtrar solo los gastos fijos (tipo 'expense')
+  const gastosFijos = scheduledTransactions.filter(transaction => 
+    transaction.tipo === 'expense' || 
+    transaction.type === 'expense' ||
+    transaction.tipo === 'egreso'
+  ).map(transaction => {
+    // Mapear con información de categoría
+    const category = categories.find(cat => cat.id === transaction.categoryId);
+    return {
+      ...transaction,
+      category: category ? { name: category.name } : null
+    };
+  });
 
-  const loadCategories = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const data = await CategoryApi.list(token);
-        setCategories(data);
-      }
-    } catch (error) {
-      console.error('Error al cargar categorías:', error);
-      setCategories([]);
-    }
-  };
-
-  const loadScheduledTransactions = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      if (token) {
-        const data = await ScheduleTransactionApi.list(token);
-        // Filtrar solo los gastos (tipo 'egreso')
-        const expenseTransactions = data.filter(transaction => 
-          transaction.tipo === 'egreso' || transaction.type === 'expense'
-        );
-        
-        // Mapear las transacciones con los nombres de categoría
-        const transactionsWithCategories = expenseTransactions.map(transaction => {
-          const category = categories.find(cat => cat.id === transaction.categoryId);
-          return {
-            ...transaction,
-            category: category ? { name: category.name } : null
-          };
-        });
-        
-        setGastosFijos(transactionsWithCategories);
-      }
-    } catch (error) {
-      console.error('Error al cargar transacciones programadas:', error);
-      setGastosFijos([]);
-    } finally {
-      setLoading(false);
-    }
+  const handleGastoCreated = () => {
+    setShowForm(false);
+    // Los hooks se actualizarán automáticamente
   };
 
   return (
@@ -117,10 +95,7 @@ export default function FixedExpenses() {
               >
               </button>
             </div>
-            <FormGastoFijo onGastoCreated={() => {
-              loadData();
-              setShowForm(false);
-            }} />
+            <FormGastoFijo onGastoCreated={handleGastoCreated} />
           </div>
         )}
         {loading ? (
@@ -129,7 +104,7 @@ export default function FixedExpenses() {
             <span className="ml-2">Cargando gastos fijos...</span>
           </div>
         ) : (
-          <TablaGastosFijos gastos={gastosFijos} onGastoUpdated={loadData} />
+          <TablaGastosFijos gastos={gastosFijos} onGastoUpdated={() => {}} />
         )}
       </section>
       </main>

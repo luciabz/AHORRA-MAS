@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { TransactionApi } from '../../infrastructure/api/transactionApi';
-import { CategoryApi } from '../../infrastructure/api/categoryApi';
+import { useTransactions } from '../hooks/useTransactions';
+import { useCategories } from '../hooks/useCategories';
 import Swal from 'sweetalert2';
 
 export default function VariableIncome() {

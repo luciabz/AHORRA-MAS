@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useTransactions, useCategories } from '../../hooks/useCleanArchitecture';
 import Swal from 'sweetalert2';
+import { useTransactions, useCategories, useScheduledTransactions } from '../../hooks';
 
 import HistoricalTransactions from './HistoricalTransactions';
 import ScheduledTransactions from './ScheduledTransactions';
@@ -14,10 +14,9 @@ export default function TransactionManager() {
     loading: transactionLoading, 
     error: transactionError,
     loadTransactions,
-    createTransaction: createTransactionUseCase,
-    updateTransaction: updateTransactionUseCase,
-    deleteTransaction: deleteTransactionUseCase,
-    clearError: clearTransactionError
+    addTransaction: createTransactionUseCase,
+    editTransaction: updateTransactionUseCase,
+    removeTransaction: deleteTransactionUseCase
   } = useTransactions();
 
   const {
@@ -25,14 +24,20 @@ export default function TransactionManager() {
     loading: categoryLoading,
     error: categoryError,
     loadCategories,
-    createCategory: createCategoryUseCase,
-    updateCategory: updateCategoryUseCase,
-    deleteCategory: deleteCategoryUseCase,
-    clearError: clearCategoryError
+    addCategory: createCategoryUseCase,
+    editCategory: updateCategoryUseCase,
+    removeCategory: deleteCategoryUseCase
   } = useCategories();
 
+  const {
+    scheduledTransactions,
+    loading: scheduleLoading,
+    addScheduledTransaction,
+    editScheduledTransaction,
+    removeScheduledTransaction
+  } = useScheduledTransactions();
+
   // Estados locales del componente
-  const [scheduleTransactions, setScheduleTransactions] = useState([]);
   const [activeTab, setActiveTab] = useState('historicas'); 
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -40,7 +45,7 @@ export default function TransactionManager() {
   const [formType, setFormType] = useState('transaction'); 
 
   // Estados combinados
-  const loading = transactionLoading || categoryLoading;
+  const loading = transactionLoading || categoryLoading || scheduleLoading;
   const error = transactionError || categoryError;
 
   // Obtener userId del token (simplificado - en producción usar contexto)
@@ -81,43 +86,39 @@ export default function TransactionManager() {
     type: 'income'
   });
 
+  // Los datos se cargan automáticamente a través de los hooks
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const userId = getUserId();
-      if (!userId) {
-        Swal.fire('Error', 'No se pudo obtener el usuario', 'error');
-        return;
-      }
-
-      // Cargar datos usando Clean Architecture
-      await Promise.all([
-        loadTransactions(userId),
-        loadCategories(userId)
-        // TODO: Agregar scheduleTransactions cuando esté implementado
-      ]);
-      
-    } catch (error) {
-      console.error('Error loading data:', error);
-      Swal.fire('Error', 'No se pudieron cargar los datos', 'error');
+    // Los hooks ya cargan los datos automáticamente, solo necesitamos validar autenticación
+    const token = localStorage.getItem('token');
+    if (!token) {
+      Swal.fire('Error', 'No se encontró token de autenticación', 'error');
+      return;
     }
-  };
+  }, []);
 
   const handleTransactionSubmit = async (e) => {
     e.preventDefault();
     try {
-      const userId = getUserId();
-      const transactionData = { ...transactionForm, userId };
+      const transactionData = { 
+        ...transactionForm, 
+        date: new Date().toISOString() // Agregar fecha actual
+      };
 
+      let result;
       if (editingItem) {
-        await updateTransactionUseCase(editingItem.id, transactionData);
-        Swal.fire('Actualizada', 'Transacción actualizada exitosamente', 'success');
+        result = await updateTransactionUseCase(editingItem.id, transactionData);
+        if (result.success) {
+          Swal.fire('Actualizada', 'Transacción actualizada exitosamente', 'success');
+        } else {
+          throw new Error(result.message);
+        }
       } else {
-        await createTransactionUseCase(transactionData);
-        Swal.fire('Creada', 'Transacción creada exitosamente', 'success');
+        result = await createTransactionUseCase(transactionData);
+        if (result.success) {
+          Swal.fire('Creada', 'Transacción creada exitosamente', 'success');
+        } else {
+          throw new Error(result.message);
+        }
       }
       resetForm();
     } catch (error) {
@@ -138,9 +139,12 @@ export default function TransactionManager() {
     
     if (result.isConfirmed) {
       try {
-        const userId = getUserId();
-        await deleteTransactionUseCase(id, userId);
-        Swal.fire('Eliminada', 'Transacción eliminada exitosamente', 'success');
+        const deleteResult = await deleteTransactionUseCase(id);
+        if (deleteResult.success) {
+          Swal.fire('Eliminada', 'Transacción eliminada exitosamente', 'success');
+        } else {
+          throw new Error(deleteResult.message);
+        }
       } catch (error) {
         console.error('Error deleting transaction:', error);
         Swal.fire('Error', error.message || 'No se pudo eliminar la transacción', 'error');
@@ -151,18 +155,26 @@ export default function TransactionManager() {
   const handleScheduleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let result;
       if (editingItem) {
-        const updated = await ScheduleTransactionApi.update(editingItem.id, scheduleForm, token);
-        setScheduleTransactions(scheduleTransactions.map(s => s.id === editingItem.id ? updated : s));
-        Swal.fire('Actualizada', 'Transacción programada actualizada exitosamente', 'success');
+        result = await editScheduledTransaction(editingItem.id, scheduleForm);
+        if (result.success) {
+          Swal.fire('Actualizada', 'Transacción programada actualizada exitosamente', 'success');
+        } else {
+          throw new Error(result.message);
+        }
       } else {
-        const newSchedule = await ScheduleTransactionApi.create(scheduleForm, token);
-        setScheduleTransactions([...scheduleTransactions, newSchedule]);
-        Swal.fire('Creada', 'Transacción programada creada exitosamente', 'success');
+        result = await addScheduledTransaction(scheduleForm);
+        if (result.success) {
+          Swal.fire('Creada', 'Transacción programada creada exitosamente', 'success');
+        } else {
+          throw new Error(result.message);
+        }
       }
       resetForm();
     } catch (error) {
-      Swal.fire('Error', 'No se pudo guardar la transacción programada', 'error');
+      console.error('Error saving scheduled transaction:', error);
+      Swal.fire('Error', error.message || 'No se pudo guardar la transacción programada', 'error');
     }
   };
 
@@ -178,11 +190,15 @@ export default function TransactionManager() {
     
     if (result.isConfirmed) {
       try {
-        await ScheduleTransactionApi.remove(id, token);
-        setScheduleTransactions(scheduleTransactions.filter(s => s.id !== id));
-        Swal.fire('Eliminada', 'Transacción programada eliminada exitosamente', 'success');
+        const deleteResult = await removeScheduledTransaction(id);
+        if (deleteResult.success) {
+          Swal.fire('Eliminada', 'Transacción programada eliminada exitosamente', 'success');
+        } else {
+          throw new Error(deleteResult.message);
+        }
       } catch (error) {
-        Swal.fire('Error', 'No se pudo eliminar la transacción programada', 'error');
+        console.error('Error deleting scheduled transaction:', error);
+        Swal.fire('Error', error.message || 'No se pudo eliminar la transacción programada', 'error');
       }
     }
   };
@@ -190,15 +206,21 @@ export default function TransactionManager() {
   const handleCategorySubmit = async (e) => {
     e.preventDefault();
     try {
-      const userId = getUserId();
-      const categoryData = { ...categoryForm, userId };
-
+      let result;
       if (editingItem) {
-        await updateCategoryUseCase(editingItem.id, categoryData);
-        Swal.fire('Actualizada', 'Categoría actualizada exitosamente', 'success');
+        result = await updateCategoryUseCase(editingItem.id, categoryForm);
+        if (result.success) {
+          Swal.fire('Actualizada', 'Categoría actualizada exitosamente', 'success');
+        } else {
+          throw new Error(result.message);
+        }
       } else {
-        await createCategoryUseCase(categoryData);
-        Swal.fire('Creada', 'Categoría creada exitosamente', 'success');
+        result = await createCategoryUseCase(categoryForm);
+        if (result.success) {
+          Swal.fire('Creada', 'Categoría creada exitosamente', 'success');
+        } else {
+          throw new Error(result.message);
+        }
       }
       setShowCategoryForm(false);
       setEditingItem(null);
@@ -221,9 +243,12 @@ export default function TransactionManager() {
     
     if (result.isConfirmed) {
       try {
-        const userId = getUserId();
-        await deleteCategoryUseCase(id, userId);
-        Swal.fire('Eliminada', 'Categoría eliminada exitosamente', 'success');
+        const deleteResult = await deleteCategoryUseCase(id);
+        if (deleteResult.success) {
+          Swal.fire('Eliminada', 'Categoría eliminada exitosamente', 'success');
+        } else {
+          throw new Error(deleteResult.message);
+        }
       } catch (error) {
         console.error('Error deleting category:', error);
         Swal.fire('Error', error.message || 'No se pudo eliminar la categoría', 'error');
@@ -317,7 +342,12 @@ export default function TransactionManager() {
         >
           Transacciones Históricas
         </button>
-       
+        <button
+          className={`px-4 py-2 font-semibold ${activeTab === 'programadas' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600'}`}
+          onClick={() => setActiveTab('programadas')}
+        >
+          Transacciones Programadas
+        </button>
         <button
           className={`px-4 py-2 font-semibold ${activeTab === 'categorias' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600'}`}
           onClick={() => setActiveTab('categorias')}
@@ -337,7 +367,7 @@ export default function TransactionManager() {
 
       {activeTab === 'programadas' && (
         <ScheduledTransactions 
-          scheduleTransactions={scheduleTransactions}
+          scheduleTransactions={scheduledTransactions}
           onEdit={(schedule) => openForm('schedule', schedule)}
           onDelete={deleteScheduleTransaction}
         />

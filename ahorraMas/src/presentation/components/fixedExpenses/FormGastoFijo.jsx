@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { CategoryApi } from '../../../infrastructure/api/categoryApi';
-import { ScheduleTransactionApi } from '../../../infrastructure/api/scheduleTransactionApi';
+import { useCategories } from '../../hooks/useCategories';
+import { useScheduledTransactions } from '../../hooks/useScheduledTransactions';
 import Swal from 'sweetalert2';
 
 export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // Usar hooks personalizados
+  const { categories, loading: categoriesLoading } = useCategories();
+  const { addScheduledTransaction, loading: scheduledLoading } = useScheduledTransactions();
+  
   const [formData, setFormData] = useState({
     amount: '',
     description: '',
@@ -17,8 +19,9 @@ export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
     nextOccurrence: ''
   });
 
+  const loading = categoriesLoading || scheduledLoading;
+
   useEffect(() => {
-    loadCategories();
     // Establecer fecha por defecto (mañana)
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -27,18 +30,6 @@ export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
       nextOccurrence: tomorrow.toISOString().split('T')[0]
     }));
   }, []);
-
-  const loadCategories = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const data = await CategoryApi.list(token);
-        setCategories(data);
-      }
-    } catch (error) {
-      console.error('Error al cargar categorías:', error);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -61,9 +52,6 @@ export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
     }
 
     try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      
       const dataToSend = {
         ...formData,
         amount: parseFloat(formData.amount),
@@ -71,31 +59,38 @@ export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
         endDate: formData.endDate || null
       };
 
-      await ScheduleTransactionApi.create(dataToSend, token);
+      const result = await addScheduledTransaction(dataToSend);
       
-      Swal.fire({
-        icon: 'success',
-        title: '¡Éxito!',
-        text: 'Gasto fijo creado correctamente'
-      });
+      if (result.success) {
+        Swal.fire({
+          icon: 'success',
+          title: '¡Éxito!',
+          text: 'Gasto fijo creado correctamente'
+        });
 
-      // Resetear formulario
-      setFormData({
-        amount: '',
-        description: '',
-        categoryId: '',
-        endDate: null,
-        type: 'expense',
-        regularity: 'static',
-        periodicity: '30 day',
-        nextOccurrence: ''
-      });
+        // Resetear formulario
+        setFormData({
+          amount: '',
+          description: '',
+          categoryId: '',
+          endDate: null,
+          type: 'expense',
+          regularity: 'static',
+          periodicity: '30 day',
+          nextOccurrence: ''
+        });
 
-      // Notificar al componente padre
-      if (onGastoCreated) {
-        onGastoCreated();
+        // Notificar al componente padre
+        if (onGastoCreated) {
+          onGastoCreated();
+        }
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: result.message || 'Error al crear el gasto fijo'
+        });
       }
-
     } catch (error) {
       console.error('Error al crear gasto fijo:', error);
       Swal.fire({
@@ -103,8 +98,6 @@ export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
         title: 'Error',
         text: 'No se pudo crear el gasto fijo. Intente nuevamente.'
       });
-    } finally {
-      setLoading(false);
     }
   };
 

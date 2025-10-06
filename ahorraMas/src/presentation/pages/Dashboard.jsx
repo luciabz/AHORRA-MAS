@@ -1,20 +1,16 @@
 
-import { getDiasRestantes } from '../../domain/services/getDiasRestantes';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isTokenExpired, scheduleTokenLogout } from '../../domain/services/session';
 import ResumenTotales from '../components/dashboard/ResumenTotales';
 import Navbar from '../components/Navbar';
 import SelectorMesBusqueda from '../components/dashboard/SelectorMesBusqueda';
 import DetalleIngresosGastos from '../components/dashboard/DetalleIngresosGastos';
 import MetaAhorro from '../components/dashboard/MetaAhorro';
-import { 
-  useTransactions, 
-  useCategories, 
-  useScheduleTransactions, 
-  useUsers,
-  useFinancialAnalysis 
-} from '../hooks/useCleanArchitecture';
+import { useTransactions, useCategories, useGoals, useScheduledTransactions } from '../hooks';
+import { useAuthContext } from '../contexts';
+import LoadingState from '../components/LoadingState';
+import ErrorState from '../components/ErrorState';
+
 import Swal from 'sweetalert2';
 
 
@@ -30,14 +26,27 @@ import Swal from 'sweetalert2';
 export default function Dashboard() {
   const navigate = useNavigate();
   
-  // Clean Architecture hooks
-  const { user, loading: userLoading } = useUsers();
-  const { transactions, loading: transLoading, createTransaction } = useTransactions();
-  const { scheduleTransactions, loading: scheduleLoading } = useScheduleTransactions();
-  const { categories, loading: categoriesLoading } = useCategories();
-  const { calculateTotals, calculateMonthlyStats, getTransactionsWithCategories } = useFinancialAnalysis();
+  // Hooks para manejar los datos
+  const { user, isAuthenticated, loading: authLoading } = useAuthContext();
+  const { 
+    transactions, 
+    loading: transLoading, 
+    error: transError,
+    addTransaction,
+    getTransactionsByMonth,
+    getTransactionsByType,
+    getTotals 
+  } = useTransactions();
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const { goals, loading: goalsLoading } = useGoals();
+  const { 
+    scheduledTransactions, 
+    loading: scheduleLoading,
+    getUpcomingTransactions 
+  } = useScheduledTransactions();
   
-  const loading = userLoading || transLoading || scheduleLoading || categoriesLoading;
+  const loading = authLoading || transLoading || scheduleLoading || categoriesLoading || goalsLoading;
+  const error = transError || categoriesError;
   
   const [showSobranteModal, setShowSobranteModal] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState(() => {
@@ -45,106 +54,184 @@ export default function Dashboard() {
     return hoy.toISOString().slice(0, 7);
   });
   
-  // Usar análisis financiero de Clean Architecture
-  const {
+  
+
+  // Calcular datos del mes seleccionado
+  const [year, month] = mesSeleccionado.split('-').map(Number);
+  // month - 1 porque getMonth() devuelve 0-11, pero mesSeleccionado viene como 1-12
+  
+  // Los totales del mes se calcularán más abajo con las transacciones combinadas
+  
+  // Los ingresos variables se calcularán después de combinar las transacciones
+  
+  // Calcular totales con validaciones mejoradas
+  const calcularTotales = (transacciones) => {
+    let totalIngresos = 0;
+    let totalGastos = 0;
+    let gastosFijos = 0;
+    let gastosVariables = 0;
+    
+    transacciones.forEach(t => {
+      const amount = parseFloat(t.amount) || 0;
+      if (t.type === 'income') {
+        totalIngresos += amount;
+      } else if (t.type === 'expense') {
+        totalGastos += amount;
+        // Considerar tanto "fixed" como "static" como gastos fijos
+        if (t.regularity === 'fixed' || t.regularity === 'static') {
+          gastosFijos += amount;
+        } else {
+          gastosVariables += amount;
+        }
+      }
+    });
+    
+    return {
+      income: totalIngresos,
+      expense: totalGastos,
+      balance: totalIngresos - totalGastos, // Balance real: ingresos - TODOS los gastos
+      fixedExpenses: gastosFijos,
+      variableExpenses: gastosVariables
+    };
+  };
+  
+  // Función para filtrar transacciones por mes (tanto regulares como programadas)
+  const filtrarTransaccionesPorMes = (transacciones, mes, año) => {
+    return transacciones.filter(t => {
+      const fecha = new Date(t.date || t.nextOccurrence || t.createdAt);
+      return fecha.getMonth() === mes && fecha.getFullYear() === año;
+    });
+  };
+  
+  // Combinar transacciones regulares y programadas
+  const todasLasTransacciones = [...transactions, ...scheduledTransactions];
+  
+  console.log('🔢 Debug transacciones:', {
+    regularTransactions: transactions.length,
+    scheduledTransactions: scheduledTransactions.length,
+    totalCombinadas: todasLasTransacciones.length,
+    mesSeleccionado: mesSeleccionado,
+    scheduledData: scheduledTransactions.map(t => ({
+      id: t.id,
+      description: t.description,
+      amount: t.amount,
+      type: t.type,
+      regularity: t.regularity,
+      nextOccurrence: t.nextOccurrence,
+      fecha: new Date(t.nextOccurrence)
+    }))
+  });
+  
+  // Filtrar por mes seleccionado
+  const transaccionesMes = getTransactionsByMonth(month - 1, year); // Solo transacciones regulares
+  const transaccionesProgramadasMes = filtrarTransaccionesPorMes(scheduledTransactions, month - 1, year);
+  
+  // Combinar ambos tipos de transacciones del mes
+  const transaccionesMesCompletas = [...transaccionesMes, ...transaccionesProgramadasMes];
+  
+  // Si no hay transacciones del mes, usar todas las transacciones
+  const transaccionesParaCalcular = transaccionesMesCompletas.length > 0 ? transaccionesMesCompletas : todasLasTransacciones;
+  const totalesCalculados = calcularTotales(transaccionesParaCalcular);
+  
+  const ingresoTotal = totalesCalculados.income;
+  const gastoTotal = totalesCalculados.expense; // TODOS los gastos (fijos + variables)
+  const gastoFijoTotal = totalesCalculados.fixedExpenses;
+  const gastoVariableTotal = totalesCalculados.variableExpenses;
+  
+  // El balance real es: ingresos - todos los gastos
+  const balanceReal = ingresoTotal - gastoTotal;
+  
+  // Debug: mostrar cálculos
+  console.log('💰 Cálculos Dashboard:', {
     ingresoTotal,
+    gastoTotal,
     gastoFijoTotal,
     gastoVariableTotal,
-    ahorro,
-    sobranteParaGastar,
-    diasRestantes,
-    tieneIngresoVariable
-  } = calculateTotals();
-  // Usar estadísticas de Clean Architecture
-  const estadisticasMensuales = calculateMonthlyStats();
+    balanceReal,
+    transaccionesCount: transaccionesParaCalcular.length
+  });
+  
+  // Solo calcular ahorro si hay balance positivo
+  const ahorro = balanceReal > 0 ? balanceReal * 0.2 : 0;
+  const sobranteParaGastar = balanceReal > 0 ? balanceReal - ahorro : 0;
+  
+  // Calcular ingresos variables de todas las transacciones combinadas
+  const ingresosVariables = todasLasTransacciones.filter(t => 
+    t.type === 'income' && (t.regularity === 'variable' || !t.regularity)
+  );
+  
+  // Calcular días restantes del mes
+  const hoy = new Date();
+  const ultimoDiaDelMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+  const diasRestantes = Math.max(0, ultimoDiaDelMes.getDate() - hoy.getDate());
+  
+  // Verificar si tiene ingresos variables
+  const tieneIngresoVariable = ingresosVariables.length > 0;
+  const ingresosConCategorias = ingresosVariables.map(ingreso => ({
+    ...ingreso,
+    categoryName: categories.find(cat => cat.id === ingreso.categoryId)?.name || 'Sin categoría'
+  }));
+  
+  // Estadísticas mensuales para los gráficos
+  const estadisticasMensuales = [
+    {
+      mes: mesSeleccionado.slice(5, 7), // Extraer el mes del formato YYYY-MM
+      ingreso: totalesCalculados.income,
+      gasto: totalesCalculados.expense,
+      balance: totalesCalculados.balance
+    }
+  ];
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token || isTokenExpired(token)) {
-      localStorage.removeItem('token');
+    if (!isAuthenticated()) {
       navigate('/login');
       return;
     }
-    
-    const timeout = scheduleTokenLogout(token, () => {
-      localStorage.removeItem('token');
-      navigate('/login');
-    });
-    return () => timeout && clearTimeout(timeout);
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
-  // Log para debug de datos
-  useEffect(() => {
-    console.log('📈 Dashboard - Datos actualizados:', {
-      user: user?.name,
-      transactions: transactions.length,
-      categories: categories.length,
-      scheduleTransactions: scheduleTransactions.length,
-      loading: { userLoading, transLoading, scheduleLoading, categoriesLoading },
-      totales: { ingresoTotal, gastoFijoTotal, gastoVariableTotal, ahorro, sobranteParaGastar }
-    });
-    
-    if (transactions.length > 0) {
-      console.log('📊 Transacciones detalladas:', transactions.map(t => ({
-        id: t.id,
-        desc: t.description,
-        amount: t.amount,
-        type: t.type,
-        regularity: t.regularity
-      })));
-    }
-    
-    if (categories.length > 0) {
-      console.log('🏷️ Categorías detalladas:', categories.map(c => ({
-        id: c.id,
-        name: c.name,
-        type: c.type
-      })));
-    }
-  }, [user, transactions, categories, scheduleTransactions, ingresoTotal, gastoFijoTotal, gastoVariableTotal, ahorro, sobranteParaGastar, userLoading, transLoading, scheduleLoading, categoriesLoading]);
+  // Si está cargando, mostrar el estado de carga
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <main className="text-black bg-gray-50 p-2 sm:p-4 md:p-6">
+          <LoadingState 
+            title="Cargando dashboard..."
+            description="Estamos obteniendo tus datos financieros"
+            size="large"
+          />
+        </main>
+      </>
+    );
+  }
 
-  // Función para cargar datos manualmente (para debugging)
-  const loadDataManually = async () => {
-    try {
-      console.log('🔄 Carga manual iniciada...');
-      
-      // Obtener userId
-      const userRepository = container.getRepository('user');
-      const userId = await userRepository.getCurrentUserId();
-      console.log('👤 User ID obtenido:', userId);
-      
-      if (userId) {
-        // Cargar transacciones manualmente
-        const transactionRepo = container.getRepository('transaction');
-        const transactionsResult = await transactionRepo.findByUserId(userId);
-        console.log('✅ Transacciones cargadas manualmente:', transactionsResult);
-        
-        // Cargar categorías manualmente  
-        const categoryRepo = container.getRepository('category');
-        const categoriesResult = await categoryRepo.findByUserId(userId);
-        console.log('✅ Categorías cargadas manualmente:', categoriesResult);
-      }
-    } catch (error) {
-      console.error('❌ Error en carga manual:', error);
-    }
-  };
+  // Si hay algún error crítico, mostrarlo
+  if (error && transactions.length === 0 && categories.length === 0) {
+    return (
+      <>
+        <Navbar />
+        <main className="text-black bg-gray-50 p-2 sm:p-4 md:p-6">
+          <ErrorState 
+            title="Error de conexión"
+            description="No se pueden cargar los datos. Verifica que la API esté ejecutándose."
+            error={error}
+            onRetry={() => window.location.reload()}
+          />
+        </main>
+      </>
+    );
+  }
+
+
+
 
   const goToVariableIncome = () => {
     navigate('/ingresos-variables');
   };
 
   const handleIngresosVariables = async () => {
-    // Usar Clean Architecture para obtener ingresos variables del mes actual
-    const mesActual = new Date().getMonth();
-    const añoActual = new Date().getFullYear();
-    
-    const ingresosConCategorias = getTransactionsWithCategories('income', 'variable').filter(transaction => {
-      const fechaTransaccion = new Date(transaction.createdAt);
-      return fechaTransaccion.getMonth() === mesActual &&
-             fechaTransaccion.getFullYear() === añoActual;
-    });
+  
 
-    console.log('Ingresos variables encontrados:', ingresosConCategorias);
 
     const totalIngresosVariables = ingresosConCategorias.reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
@@ -262,15 +349,18 @@ export default function Dashboard() {
 
     if (formValues) {
       try {
-        const token = localStorage.getItem('token');
-        
         const newTransaction = {
           ...formValues,
           type: 'income',
-          regularity: 'variable'
+          regularity: 'variable',
+          date: new Date().toISOString()
         };
 
-        await createTransaction(newTransaction);
+        const result = await addTransaction(newTransaction);
+        
+        if (!result.success) {
+          throw new Error(result.message);
+        }
         
         Swal.fire({
           title: '¡Ingreso variable agregado!',
@@ -355,15 +445,25 @@ export default function Dashboard() {
 
     if (formValues) {
       try {
-        const token = localStorage.getItem('token');
-        
         const newTransaction = {
           ...formValues,
           type: 'income', // Se registra como ingreso porque es dinero que entra del mes anterior
-          regularity: 'extra' // Es un ingreso extra del sobrante
+          regularity: 'extra', // Es un ingreso extra del sobrante
+          date: new Date().toISOString()
         };
 
-        await createTransaction(newTransaction);
+        console.log('💰 Agregando sobrante:', newTransaction);
+        const result = await addTransaction(newTransaction);
+        console.log('✅ Resultado de agregar sobrante:', result);
+        console.log('🔍 Tipo de resultado:', typeof result);
+        console.log('🔍 Claves del resultado:', result ? Object.keys(result) : 'no hay resultado');
+        console.log('🔍 result.success:', result?.success);
+        console.log('🔍 Evaluación success:', !result || !result.success);
+        
+        if (!result || !result.success) {
+          console.error('❌ Error en resultado:', result);
+          throw new Error(result?.message || 'Error desconocido al guardar');
+        }
         
         Swal.fire({
           title: '¡Sobrante agregado!',
@@ -373,10 +473,15 @@ export default function Dashboard() {
         });
 
       } catch (error) {
-        console.error('Error al guardar ahorro:', error);
+        console.error('❌ Error al guardar sobrante:', error);
+        console.error('❌ Error stack:', error.stack);
+        console.error('❌ Error response:', error.response?.data);
+        
+        const errorMessage = error.message || error.response?.data?.message || 'Error desconocido';
+        
         Swal.fire({
           title: 'Error',
-          text: 'No se pudo guardar el ahorro. Intenta nuevamente.',
+          text: `No se pudo guardar el sobrante: ${errorMessage}`,
           icon: 'error',
           confirmButtonColor: '#dc2626'
         });
@@ -463,6 +568,7 @@ export default function Dashboard() {
 
         <ResumenTotales
           ingresoTotal={ingresoTotal}
+          gastoTotal={gastoTotal}
           gastoFijoTotal={gastoFijoTotal}
           ahorro={ahorro}
           sobranteParaGastar={sobranteParaGastar}

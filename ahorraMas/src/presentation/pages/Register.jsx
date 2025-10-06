@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAuthContext } from '../contexts/AuthContext';
 import './Auth.css';
 
 export default function Register() {
@@ -8,6 +8,9 @@ export default function Register() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  
+  // Usar el contexto de autenticación
+  const { register, loading } = useAuthContext();
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,13 +20,19 @@ export default function Register() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    
     try {
-         const apiUrl = import.meta.env.VITE_API_URL;
-      await axios.post(`${apiUrl}/api/v1/auth/register/`, form);
-  setSuccess('Usuario creado exitosamente');
-  setTimeout(() => navigate('/login'), 1000);
+      const result = await register(form);
+      
+      if (result.success) {
+        setSuccess('Usuario creado exitosamente');
+        setTimeout(() => navigate('/login'), 1000);
+      } else {
+        setError(result.message || 'Error al registrar usuario');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al registrar usuario');
+      console.error('Error en registro:', err);
+      setError('Error de conexión. Intente nuevamente.');
     }
   };
 

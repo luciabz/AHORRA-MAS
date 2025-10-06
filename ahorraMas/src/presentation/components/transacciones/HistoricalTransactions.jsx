@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useTransactions, useScheduleTransactions, useCategories } from '../../hooks/useCleanArchitecture';
+import { useTransactions } from '../../hooks/useTransactions';
+import { useScheduledTransactions } from '../../hooks/useScheduledTransactions';
+import { useCategories } from '../../hooks/useCategories';
 
 export default function HistoricalTransactions() {
-  const { transactions, loading: transLoading, error: transError, updateTransaction, deleteTransaction, createTransaction } = useTransactions();
-  const { scheduleTransactions, loading: scheduleLoading, error: scheduleError, createScheduleTransaction } = useScheduleTransactions();
+  const { transactions, loading: transLoading, error: transError, editTransaction, removeTransaction, addTransaction } = useTransactions();
+  const { scheduledTransactions, loading: scheduleLoading, error: scheduleError, addScheduledTransaction } = useScheduledTransactions();
   const { categories } = useCategories();
   
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -15,8 +17,8 @@ export default function HistoricalTransactions() {
   // Combinar transacciones regulares y programadas
   const allTransactions = [
     ...transactions.map(t => ({ ...t, isScheduled: false })),
-    ...scheduleTransactions.map(t => ({ ...t, isScheduled: true }))
-  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    ...scheduledTransactions.map(t => ({ ...t, isScheduled: true }))
+  ].sort((a, b) => new Date(b.createdAt || b.updatedAt) - new Date(a.createdAt || a.updatedAt));
 
   const handleEdit = async (transaction) => {
     // Crear modal o formulario de edición
@@ -27,20 +29,24 @@ export default function HistoricalTransactions() {
     };
 
     if (updatedData.description && updatedData.amount) {
-      await updateTransaction(transaction.id, updatedData);
+      await editTransaction(transaction.id, updatedData);
     }
   };
 
   const handleDelete = async (transactionId) => {
     if (confirm('¿Estás seguro de eliminar esta transacción?')) {
-      await deleteTransaction(transactionId);
+      await removeTransaction(transactionId);
     }
   };
 
   const handleCreateTransaction = async (formData) => {
     try {
-      await createTransaction(formData);
-      setShowTransactionModal(false);
+      const result = await addTransaction(formData);
+      if (result.success) {
+        setShowTransactionModal(false);
+      } else {
+        alert(result.message || 'Error al crear la transacción');
+      }
     } catch (error) {
       console.error('Error creando transacción:', error);
       alert('Error al crear la transacción');
@@ -49,8 +55,12 @@ export default function HistoricalTransactions() {
 
   const handleCreateScheduleTransaction = async (formData) => {
     try {
-      await createScheduleTransaction(formData);
-      setShowScheduleModal(false);
+      const result = await addScheduledTransaction(formData);
+      if (result.success) {
+        setShowScheduleModal(false);
+      } else {
+        alert(result.message || 'Error al crear la transacción programada');
+      }
     } catch (error) {
       console.error('Error creando transacción programada:', error);
       alert('Error al crear la transacción programada');

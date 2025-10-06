@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAuthContext } from '../contexts/AuthContext';
 
 
 export default function Login() {
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ name: '', password: '' });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  
+  // Usar el contexto de autenticación
+  const { login, loading } = useAuthContext();
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -16,27 +18,19 @@ export default function Login() {
   const handleSubmit = async e => {
     e.preventDefault();
     setError('');
-    setLoading(true);
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const res = await axios.post(`${apiUrl}/api/v1/auth/login/`, form);
+      const result = await login(form);
       
-      // Guardar token
-      localStorage.setItem('token', res.data.token);
-      
-      // Si la respuesta incluye información del usuario, guardarla
-      if (res.data.user && res.data.user.id) {
-        localStorage.setItem('userId', res.data.user.id.toString());
+      if (result.success) {
+        console.log('Login exitoso:', result);
+        navigate('/dashboard');
+      } else {
+        setError(result.message || 'Credenciales incorrectas');
       }
-      
-      console.log('Login exitoso:', res.data);
-      navigate('/dashboard');
     } catch (err) {
       console.error('Error en login:', err);
-      setError(err.response?.data?.message || 'Credenciales incorrectas');
-    } finally {
-      setLoading(false);
+      setError('Error de conexión. Intente nuevamente.');
     }
   };
 
@@ -46,10 +40,10 @@ export default function Login() {
         <h1 className="auth-title">Iniciar sesión</h1>
         <input
           className="input"
-          type="email"
-          name="email"
-          placeholder="Correo electrónico"
-          value={form.email}
+          type="text"
+          name="name"
+          placeholder="Nombre de usuario"
+          value={form.name}
           onChange={handleChange}
           required
         />

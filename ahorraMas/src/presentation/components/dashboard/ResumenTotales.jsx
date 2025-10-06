@@ -1,4 +1,4 @@
-export default function ResumenTotales({ ingresoTotal, gastoFijoTotal, ahorro, sobranteParaGastar, diasRestantes }) {
+export default function ResumenTotales({ ingresoTotal, gastoTotal, gastoFijoTotal, ahorro, sobranteParaGastar, diasRestantes }) {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8" aria-label="Resumen de totales">
       <div className="bg-white p-4 rounded shadow transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer flex items-center gap-4 justify-between">
@@ -12,14 +12,14 @@ export default function ResumenTotales({ ingresoTotal, gastoFijoTotal, ahorro, s
       </div>
       <div className="bg-white p-4 rounded shadow transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer flex items-center gap-4 justify-between">
         <div>
-          <h2 className="text-lg font-semibold mb-2">Gasto Fijo Total</h2>
-          <div className="text-2xl text-gray-400">${gastoFijoTotal}</div>
+          <h2 className="text-lg font-semibold mb-2">Gasto Total</h2>
+          <div className="text-2xl text-red-600">${gastoTotal}</div>
+          <div className="text-sm text-gray-500">Fijos: ${gastoFijoTotal}</div>
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-house-plus-icon lucide-house-plus">
-          <path d="M12.662 21H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v2.475"/>
-          <path d="M14.959 12.717A1 1 0 0 0 14 12h-4a1 1 0 0 0-1 1v8"/>
-          <path d="M15 18h6"/>
-          <path d="M18 15v6"/>
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-receipt-text">
+          <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/>
+          <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>
+          <path d="M12 17.5v-11"/>
         </svg>
       </div>
       <div className="bg-white p-4 rounded shadow transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer flex items-center gap-4 justify-between">
