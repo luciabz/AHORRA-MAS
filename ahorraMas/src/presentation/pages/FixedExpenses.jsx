@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import mockUser from '../../infrastructure/api/mockUser.json';
 import Navbar from '../components/Navbar';
 import SelectorMesBusqueda from '../components/fixedExpenses/SelectorMesBusqueda';
 import FormGastoFijo from '../components/fixedExpenses/FormGastoFijo';
