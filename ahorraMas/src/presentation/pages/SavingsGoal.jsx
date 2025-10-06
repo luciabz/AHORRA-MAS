@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { GoalApi } from '../../infrastructure/api/goalApi';
+import React, { useState } from 'react';
+import { useGoals } from '../hooks/useCleanArchitecture';
 import Navbar from '../components/Navbar';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -7,54 +7,35 @@ import withReactContent from 'sweetalert2-react-content';
 const MySwal = withReactContent(Swal);
 
 export default function SavingsGoal() {
-  const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { 
+    goals, 
+    loading, 
+    error: goalError, 
+    createGoal, 
+    updateGoal, 
+    deleteGoal,
+    getGoalById 
+  } = useGoals();
+  
   const [form, setForm] = useState({ title: '', description: '', targetAmount: '', deadline: '' });
   const [success, setSuccess] = useState('');
-  const [showDetailId, setShowDetailId] = useState(null);
-  const [detailGoal, setDetailGoal] = useState(null);
-  const [editGoalId, setEditGoalId] = useState(null);
-  const [editForm, setEditForm] = useState({ description: '', targetAmount: '' });
-
-  const token = localStorage.getItem('token');
-
-  // Listar metas al montar
-  useEffect(() => {
-    const fetchGoals = async () => {
-      setLoading(true);
-      try {
-        const data = await GoalApi.list(token);
-        setGoals(data);
-      } catch (err) {
-        setError('Error al cargar metas');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGoals();
-  }, [token]);
 
   // Crear meta
   const handleSubmit = async e => {
     e.preventDefault();
-    setError('');
     setSuccess('');
     try {
-      const newGoal = await GoalApi.create(form, token);
-      setGoals([...goals, newGoal]);
+      await createGoal(form);
       setForm({ title: '', description: '', targetAmount: '', deadline: '' });
       setSuccess('Meta creada exitosamente');
       MySwal.fire({ icon: 'success', title: 'Meta creada', text: 'La meta fue creada exitosamente.' });
     } catch (err) {
-      setError('Error al crear meta');
       MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la meta.' });
     }
   };
 
   // Eliminar meta con confirmación
   const handleDelete = async id => {
-    setError('');
     const result = await MySwal.fire({
       title: '¿Eliminar meta?',
       text: 'Esta acción no se puede deshacer',
@@ -67,11 +48,9 @@ export default function SavingsGoal() {
     });
     if (result.isConfirmed) {
       try {
-        await GoalApi.remove(id, token);
-        setGoals(goals.filter(g => g.id !== id));
+        await deleteGoal(id);
         MySwal.fire('Eliminada', 'La meta fue eliminada.', 'success');
       } catch {
-        setError('Error al eliminar meta');
         MySwal.fire('Error', 'No se pudo eliminar la meta.', 'error');
       }
     }
@@ -79,11 +58,8 @@ export default function SavingsGoal() {
 
   // Mostrar detalle en modal
   const handleShowDetail = async id => {
-    setShowDetailId(id);
-    setDetailGoal(null);
     try {
-      const data = await GoalApi.detail(id, token);
-      setDetailGoal(data);
+      const data = await getGoalById(id);
       MySwal.fire({
         title: <span>Detalle de la meta</span>,
         html: (
@@ -108,8 +84,6 @@ export default function SavingsGoal() {
 
   // Editar meta (abrir modal)
   const handleEdit = goal => {
-    setEditGoalId(goal.id);
-    setEditForm({ description: goal.description, targetAmount: goal.targetAmount });
     MySwal.fire({
       title: 'Editar meta',
       html: (
@@ -144,14 +118,12 @@ export default function SavingsGoal() {
     }).then(async result => {
       if (result.isConfirmed) {
         try {
-          const updated = await GoalApi.update(goal.id, result.value, token);
-          setGoals(goals.map(g => g.id === goal.id ? { ...g, ...updated } : g));
+          await updateGoal(goal.id, result.value);
           MySwal.fire('Actualizada', 'La meta fue actualizada.', 'success');
         } catch {
           MySwal.fire('Error', 'No se pudo actualizar la meta.', 'error');
         }
       }
-      setEditGoalId(null);
     });
   };
 
@@ -185,7 +157,7 @@ export default function SavingsGoal() {
             <button type="submit" className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800">Guardar Meta</button>
           </div>
         </form>
-        {error && <div className="text-red-600 mt-2">{error}</div>}
+        {goalError && <div className="text-red-600 mt-2">{goalError}</div>}
         {success && <div className="text-green-700 mt-2">{success}</div>}
       </section>
       <section className="bg-white p-6 rounded shadow" aria-labelledby="estado-meta">

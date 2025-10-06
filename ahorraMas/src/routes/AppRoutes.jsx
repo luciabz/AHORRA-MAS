@@ -8,6 +8,7 @@ import PrivateRoute from './PrivateRoute';
 import Gastos from '../presentation/pages/FixedExpenses';
 import SavingsGoal from '../presentation/pages/SavingsGoal';
 import VariableIncome from '../presentation/pages/VariableIncome';
+import Transactions from '../presentation/pages/Transactions';
 export default function AppRoutes() {
   return (
     <Routes>
@@ -34,6 +35,12 @@ export default function AppRoutes() {
 <Route path="/ingresos-variables" element={
   <PrivateRoute>
     <VariableIncome />
+  </PrivateRoute>
+} />
+
+<Route path="/transacciones" element={
+  <PrivateRoute>
+    <Transactions />
   </PrivateRoute>
 } />
 
