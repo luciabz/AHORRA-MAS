@@ -5,11 +5,6 @@ export const getGoal = async () => {
     const { data } = await axiosInstance.get('/api/v1/goal');
     return data;
   } catch (error) {
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message,
-      data: error.response?.data,
-      url: '/api/v1/goal'
-    });
     
     // Si es 401 o 404, retornar array vacío para no romper la app
     if (error.response?.status === 401 || error.response?.status === 404) {

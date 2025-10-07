@@ -16,11 +16,6 @@ export const authRepository = {
       
       const token = tokenFromData || tokenFromHeaders;
       
-        fromData: tokenFromData,
-        fromHeaders: tokenFromHeaders,
-        finalToken: token
-      });
-      
       // Si es 204 o tenemos token, construir respuesta exitosa
       if (response.status === 204 || token) {
         return {
@@ -53,11 +48,6 @@ export const authRepository = {
       });
       
       // Debug: ver la respuesta completa
-        status: response.status,
-        statusText: response.statusText,
-        data: response.data,
-        headers: response.headers
-      });
       
       // Manejar tanto 201 (Created) como 204 (No Content) como exitosos
       if (response.status === 201 || response.status === 204) {

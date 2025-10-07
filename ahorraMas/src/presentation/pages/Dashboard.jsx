@@ -242,10 +242,6 @@ export default function Dashboard() {
         const nuevoMonto = parseFloat(meta.currentAmount || 0) + formValues.monto;
         
         // Simular actualización de meta (aquí deberías usar tu API)
-          metaId: formValues.metaId,
-          nuevoMonto: nuevoMonto,
-          montoAsignado: formValues.monto
-        });
 
         Swal.fire({
           title: '¡Ahorro asignado!',
