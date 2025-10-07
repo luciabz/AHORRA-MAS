@@ -17,18 +17,30 @@ declare global {
 }
 // Función para obtener la URL de la API según el entorno
 const getApiUrl = () => {
-  // Primera prioridad: variable de entorno explícita
-  const envApi = import.meta.env.VITE_URL_API || (typeof window !== 'undefined' ? window.env?.VITE_URL_API : '');
+  console.log('🔍 STARTING API URL Detection in constant.tsx');
+  console.log('🔍 All import.meta.env:', import.meta.env);
   
-  console.log('🔍 API URL Detection in constant.tsx:');
+  // Primera prioridad: variable de entorno explícita
+  const envApi = import.meta.env.VITE_URL_API || (typeof window !== 'undefined' ? window.env?.VITE_URL_API : undefined);
+  
+  console.log('🔍 Environment Variables Check:');
   console.log('  - import.meta.env.VITE_URL_API:', import.meta.env.VITE_URL_API);
+  console.log('  - typeof VITE_URL_API:', typeof import.meta.env.VITE_URL_API);
   console.log('  - window.env?.VITE_URL_API:', typeof window !== 'undefined' ? window.env?.VITE_URL_API : 'N/A');
   console.log('  - Final envApi value:', envApi);
+  console.log('  - envApi === "":', envApi === '');
+  console.log('  - envApi !== undefined:', envApi !== undefined);
   
-  // Si hay una variable de entorno definida, usarla (incluso si está vacía para forzar proxy)
-  if (envApi !== undefined) {
-    console.log('📦 Using environment variable:', envApi === '' ? '(empty string - PROXY MODE)' : envApi);
-    return envApi;
+  // FORZAR MODO PROXY para producción si la variable está definida como cadena vacía
+  if (typeof envApi === 'string') {
+    console.log('📦 USING ENVIRONMENT VARIABLE (string detected)');
+    if (envApi === '') {
+      console.log('✅ FORCED PROXY MODE - Empty string detected');
+      return '';
+    } else {
+      console.log('🎯 DIRECT MODE - URL provided:', envApi);
+      return envApi;
+    }
   }
   
   // Segunda prioridad: detección automática del entorno
@@ -37,39 +49,42 @@ const getApiUrl = () => {
     const port = window.location.port;
     const protocol = window.location.protocol;
     
-    // Detección más robusta incluyendo dominios de Vercel
+    console.log('🌍 Window Location Details:');
+    console.log('  - full URL:', window.location.href);
+    console.log('  - hostname:', hostname);
+    console.log('  - port:', port);
+    console.log('  - protocol:', protocol);
+    
+    // Detección específica de Vercel (más prioritaria)
+    const isVercel = hostname.includes('.vercel.app') || 
+                     hostname.includes('.now.sh') ||
+                     hostname === 'ahorra-mas.vercel.app';
+    
+    // Detección de desarrollo
     const isDevelopment = hostname === 'localhost' || 
                          hostname === '127.0.0.1' ||
                          port === '5173' ||
                          port === '3000' ||
                          port === '4173';
     
-    // Detección específica de Vercel
-    const isVercel = hostname.includes('.vercel.app') || 
-                     hostname.includes('.now.sh') ||
-                     hostname.includes('ahorra-mas.vercel.app');
-    
-    console.log('🌍 Environment Detection Details:');
-    console.log('  - hostname:', hostname);
-    console.log('  - port:', port);
-    console.log('  - protocol:', protocol);
+    console.log('🎯 Environment Classification:');
     console.log('  - isDevelopment:', isDevelopment);
     console.log('  - isVercel:', isVercel);
     
-    if (isDevelopment) {
-      // Desarrollo: HTTP directo
-      console.log('🔧 DEVELOPMENT MODE: Using direct HTTP connection');
+    if (isVercel) {
+      console.log('🚀 VERCEL DETECTED: Using proxy mode');
+      return '';
+    } else if (isDevelopment) {
+      console.log('🔧 DEVELOPMENT DETECTED: Using direct HTTP');
       return 'http://3.85.57.147:8080';
     } else {
-      // Producción: proxy relativo (incluye Vercel)
-      console.log('🚀 PRODUCTION MODE: Using proxy with relative URLs');
-      console.log('🔄 All requests will be /api/* and proxied by serverless function');
+      console.log('🌐 OTHER PRODUCTION: Using proxy mode');
       return '';
     }
   }
   
   // Fallback para entornos server-side
-  console.log('🖥️ SERVER-SIDE fallback');
+  console.log('🖥️ SERVER-SIDE fallback - using direct HTTP');
   return 'http://3.85.57.147:8080';
 };
 
