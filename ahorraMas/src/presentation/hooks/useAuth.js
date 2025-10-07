@@ -114,36 +114,62 @@ export const useAuth = () => {
     setError(null);
     
     try {
+      console.log('🔑 useAuth: Registering user with:', userData);
+      
       const response = await authRepository.register(userData);
       
-      if (response.success) {
-        // Si el registro es exitoso, también hacer login automático
+      console.log('📝 Register response:', response);
+      
+      // Verificar éxito: explícito success=true o respuesta exitosa implícita
+      const isSuccess = response.success === true || 
+                       (response.success !== false && response); // Si no es explícitamente false y hay respuesta
+      
+      if (isSuccess) {
+        // Si el registro es exitoso, prepara los datos del usuario
+        const user = response.user || { 
+          name: userData.name, 
+          email: userData.email 
+        };
+        
+        // Si viene token, guardarlo (opcional para registro)
         if (response.token) {
           localStorage.setItem('token', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-          setUser(response.user);
+          localStorage.setItem('user', JSON.stringify(user));
+          setUser(user);
         }
         
         return {
           success: true,
-          message: 'Registro exitoso',
-          user: response.user,
+          message: response.message || 'Usuario registrado exitosamente',
+          user: user,
           token: response.token
         };
       } else {
-        setError(response.message || 'Error en el registro');
+        const errorMessage = response.message || 'Error en el registro';
+        setError(errorMessage);
         return {
           success: false,
-          message: response.message || 'Error en el registro'
+          message: errorMessage
         };
       }
     } catch (error) {
-      console.error('Register error:', error);
-      const message = error.response?.data?.message || error.message || 'Error de conexión';
-      setError(message);
+      console.error('❌ Register error:', error);
+      
+      // Extraer mensaje de error más específico
+      let errorMessage = 'Error de conexión';
+      
+      if (error.response?.data) {
+        errorMessage = error.response.data.message || 
+                      error.response.data.error || 
+                      'Error del servidor';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
       return {
         success: false,
-        message
+        message: errorMessage
       };
     } finally {
       setLoading(false);

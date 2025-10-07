@@ -16,11 +16,7 @@ axiosInstance.interceptors.request.use((config) => {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
   
-  // Debug: mostrar la URL completa
-  console.log('📡 Making request to:', `${config.baseURL}${config.url}`);
-  console.log('📡 Request method:', config.method);
-  console.log('📡 Request headers:', config.headers);
-  
+
   return config;
 });
 
@@ -29,17 +25,34 @@ axiosInstance.interceptors.response.use(
     console.log('📥 Response received:', {
       url: response.config.url,
       status: response.status,
-      statusText: response.statusText
+      statusText: response.statusText,
+      hasData: !!response.data,
+      dataKeys: response.data ? Object.keys(response.data) : []
     });
+    
+    if (response.status === 204) {
+      console.log('✅ Status 204 - Creating success response');
+      response.data = {
+        success: true,
+        message: 'Operación exitosa'
+      };
+    }
+    
     return response;
   },
   (error) => {
-    console.error('📥 Response error:', {
+    console.error('❌ Response error:', {
       url: error.config?.url,
       status: error.response?.status,
       statusText: error.response?.statusText,
-      data: error.response?.data
+      data: error.response?.data,
+      message: error.message
     });
+    
+    if (error.response?.status === 400 || error.response?.status === 409) {
+      console.error('🚫 Validation/Conflict error:', error.response.data);
+    }
+    
     return Promise.reject(error);
   }
 );

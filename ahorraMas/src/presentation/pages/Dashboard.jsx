@@ -26,7 +26,6 @@ import Swal from 'sweetalert2';
 export default function Dashboard() {
   const navigate = useNavigate();
   
-  // Hooks para manejar los datos
   const { user, isAuthenticated, loading: authLoading } = useAuthContext();
   const { 
     transactions, 
@@ -56,15 +55,10 @@ export default function Dashboard() {
   
   
 
-  // Calcular datos del mes seleccionado
   const [year, month] = mesSeleccionado.split('-').map(Number);
-  // month - 1 porque getMonth() devuelve 0-11, pero mesSeleccionado viene como 1-12
   
-  // Los totales del mes se calcularán más abajo con las transacciones combinadas
   
-  // Los ingresos variables se calcularán después de combinar las transacciones
   
-  // Calcular totales con validaciones mejoradas
   const calcularTotales = (transacciones) => {
     let totalIngresos = 0;
     let totalGastos = 0;
@@ -77,7 +71,6 @@ export default function Dashboard() {
         totalIngresos += amount;
       } else if (t.type === 'expense') {
         totalGastos += amount;
-        // Considerar tanto "fixed" como "static" como gastos fijos
         if (t.regularity === 'fixed' || t.regularity === 'static') {
           gastosFijos += amount;
         } else {
@@ -89,13 +82,12 @@ export default function Dashboard() {
     return {
       income: totalIngresos,
       expense: totalGastos,
-      balance: totalIngresos - totalGastos, // Balance real: ingresos - TODOS los gastos
+      balance: totalIngresos - totalGastos, 
       fixedExpenses: gastosFijos,
       variableExpenses: gastosVariables
     };
   };
   
-  // Función para filtrar transacciones por mes (tanto regulares como programadas)
   const filtrarTransaccionesPorMes = (transacciones, mes, año) => {
     return transacciones.filter(t => {
       const fecha = new Date(t.date || t.nextOccurrence || t.createdAt);
@@ -103,79 +95,201 @@ export default function Dashboard() {
     });
   };
   
-  // Combinar transacciones regulares y programadas
   const todasLasTransacciones = [...transactions, ...scheduledTransactions];
   
-  console.log('🔢 Debug transacciones:', {
-    regularTransactions: transactions.length,
-    scheduledTransactions: scheduledTransactions.length,
-    totalCombinadas: todasLasTransacciones.length,
-    mesSeleccionado: mesSeleccionado,
-    scheduledData: scheduledTransactions.map(t => ({
-      id: t.id,
-      description: t.description,
-      amount: t.amount,
-      type: t.type,
-      regularity: t.regularity,
-      nextOccurrence: t.nextOccurrence,
-      fecha: new Date(t.nextOccurrence)
-    }))
-  });
-  
-  // Filtrar por mes seleccionado
+ 
   const transaccionesMes = getTransactionsByMonth(month - 1, year); // Solo transacciones regulares
   const transaccionesProgramadasMes = filtrarTransaccionesPorMes(scheduledTransactions, month - 1, year);
   
-  // Combinar ambos tipos de transacciones del mes
   const transaccionesMesCompletas = [...transaccionesMes, ...transaccionesProgramadasMes];
   
-  // Si no hay transacciones del mes, usar todas las transacciones
   const transaccionesParaCalcular = transaccionesMesCompletas.length > 0 ? transaccionesMesCompletas : todasLasTransacciones;
   const totalesCalculados = calcularTotales(transaccionesParaCalcular);
   
   const ingresoTotal = totalesCalculados.income;
-  const gastoTotal = totalesCalculados.expense; // TODOS los gastos (fijos + variables)
+  const gastoTotal = totalesCalculados.expense; 
   const gastoFijoTotal = totalesCalculados.fixedExpenses;
   const gastoVariableTotal = totalesCalculados.variableExpenses;
   
-  // El balance real es: ingresos - todos los gastos
   const balanceReal = ingresoTotal - gastoTotal;
   
-  // Debug: mostrar cálculos
-  console.log('💰 Cálculos Dashboard:', {
-    ingresoTotal,
-    gastoTotal,
-    gastoFijoTotal,
-    gastoVariableTotal,
-    balanceReal,
-    transaccionesCount: transaccionesParaCalcular.length
-  });
   
-  // Solo calcular ahorro si hay balance positivo
   const ahorro = balanceReal > 0 ? balanceReal * 0.2 : 0;
   const sobranteParaGastar = balanceReal > 0 ? balanceReal - ahorro : 0;
   
-  // Calcular ingresos variables de todas las transacciones combinadas
   const ingresosVariables = todasLasTransacciones.filter(t => 
     t.type === 'income' && (t.regularity === 'variable' || !t.regularity)
   );
   
-  // Calcular días restantes del mes
-  const hoy = new Date();
-  const ultimoDiaDelMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
-  const diasRestantes = Math.max(0, ultimoDiaDelMes.getDate() - hoy.getDate());
+  // Calcular días restantes para la meta más próxima
+  const calcularDiasParaMeta = () => {
+    // Filtrar metas activas (que no están completadas y tienen fecha límite)
+    const metasActivas = goals.filter(goal => 
+      (goal.deadline || goal.endDate) && 
+      new Date(goal.deadline || goal.endDate) > new Date() &&
+      parseFloat(goal.currentAmount || 0) < parseFloat(goal.targetAmount)
+    );
+
+    console.log('🎯 Dashboard - Goals disponibles:', goals);
+    console.log('🎯 Dashboard - Metas activas filtradas:', metasActivas);
+
+    if (metasActivas.length === 0) {
+      // Si no hay metas activas, usar días restantes del mes como fallback
+      const hoy = new Date();
+      const ultimoDiaDelMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+      return Math.max(0, ultimoDiaDelMes.getDate() - hoy.getDate());
+    }
+
+    // Encontrar la meta más próxima a vencer
+    const metaMasProxima = metasActivas.sort((a, b) => 
+      new Date(a.deadline || a.endDate) - new Date(b.deadline || b.endDate)
+    )[0];
+
+    console.log('🎯 Dashboard - Meta más próxima:', metaMasProxima);
+
+    // Calcular días restantes para esa meta
+    const hoy = new Date();
+    const fechaMeta = new Date(metaMasProxima.deadline || metaMasProxima.endDate);
+    const diferencia = fechaMeta - hoy;
+    const diasRestantes = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
+    
+    console.log('🎯 Dashboard - Días restantes calculados:', diasRestantes);
+    
+    return Math.max(0, diasRestantes);
+  };
+
+  const diasRestantes = calcularDiasParaMeta();
   
-  // Verificar si tiene ingresos variables
+  const handleAssignAhorroToGoal = async () => {
+    const metasActivas = goals.filter(goal => 
+      (goal.deadline || goal.endDate) && 
+      new Date(goal.deadline || goal.endDate) > new Date() &&
+      parseFloat(goal.currentAmount || 0) < parseFloat(goal.targetAmount)
+    );
+
+    if (metasActivas.length === 0) {
+      Swal.fire({
+        title: 'No hay metas activas',
+        text: 'Crea una meta primero para asignar tu ahorro',
+        icon: 'info',
+        confirmButtonColor: '#2563eb'
+      });
+      return;
+    }
+
+    if (ahorro <= 0) {
+      Swal.fire({
+        title: 'No hay ahorro disponible',
+        text: 'No tienes ahorro disponible para asignar a una meta',
+        icon: 'warning',
+        confirmButtonColor: '#dc2626'
+      });
+      return;
+    }
+
+    // Crear opciones para el select
+    const opcionesMetas = metasActivas.map(meta => 
+      `<option value="${meta.id}">${meta.title} (${formatCurrency(parseFloat(meta.currentAmount || 0))} / ${formatCurrency(parseFloat(meta.targetAmount))})</option>`
+    ).join('');
+
+    const { value: formValues } = await Swal.fire({
+      title: 'Asignar Ahorro a Meta',
+      html: `
+        <div class="space-y-4">
+          <div class="text-sm text-blue-600 bg-blue-50 p-3 rounded">
+            <strong>💰 Ahorro disponible:</strong> ${formatCurrency(ahorro)}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Selecciona la meta:</label>
+            <select id="swal-meta" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Seleccione una meta</option>
+              ${opcionesMetas}
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Monto a asignar:</label>
+            <input id="swal-monto" type="number" step="0.01" min="0.01" max="${ahorro}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0.00" value="${ahorro}" />
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Asignar Ahorro',
+      cancelButtonText: 'Cancelar',
+      focusConfirm: false,
+      width: '500px',
+      preConfirm: () => {
+        const metaId = document.getElementById('swal-meta').value;
+        const monto = document.getElementById('swal-monto').value;
+        
+        if (!metaId || !monto) {
+          Swal.showValidationMessage('Por favor completa todos los campos');
+          return false;
+        }
+        
+        if (parseFloat(monto) <= 0 || parseFloat(monto) > ahorro) {
+          Swal.showValidationMessage(`El monto debe estar entre 0.01 y ${ahorro}`);
+          return false;
+        }
+        
+        return { 
+          metaId: parseInt(metaId), 
+          monto: parseFloat(monto)
+        };
+      }
+    });
+
+    if (formValues) {
+      try {
+        const meta = metasActivas.find(m => m.id === formValues.metaId);
+        const nuevoMonto = parseFloat(meta.currentAmount || 0) + formValues.monto;
+        
+        // Simular actualización de meta (aquí deberías usar tu API)
+        console.log('🎯 Actualizando meta:', {
+          metaId: formValues.metaId,
+          nuevoMonto: nuevoMonto,
+          montoAsignado: formValues.monto
+        });
+
+        Swal.fire({
+          title: '¡Ahorro asignado!',
+          text: `Has asignado $${formValues.monto.toFixed(2)} a la meta "${meta.title}"`,
+          icon: 'success',
+          confirmButtonColor: '#16a34a'
+        });
+
+        // Aquí podrías recargar los datos o actualizar el estado
+        
+      } catch (error) {
+        console.error('Error al asignar ahorro a meta:', error);
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo asignar el ahorro a la meta',
+          icon: 'error',
+          confirmButtonColor: '#dc2626'
+        });
+      }
+    }
+  };
+
+  // Helper para formatear moneda
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS'
+    }).format(amount);
+  };
+  
   const tieneIngresoVariable = ingresosVariables.length > 0;
   const ingresosConCategorias = ingresosVariables.map(ingreso => ({
     ...ingreso,
     categoryName: categories.find(cat => cat.id === ingreso.categoryId)?.name || 'Sin categoría'
   }));
   
-  // Estadísticas mensuales para los gráficos
   const estadisticasMensuales = [
     {
-      mes: mesSeleccionado.slice(5, 7), // Extraer el mes del formato YYYY-MM
+      mes: mesSeleccionado.slice(5, 7), 
       ingreso: totalesCalculados.income,
       gasto: totalesCalculados.expense,
       balance: totalesCalculados.balance
@@ -189,7 +303,6 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Si está cargando, mostrar el estado de carga
   if (loading) {
     return (
       <>
@@ -205,7 +318,6 @@ export default function Dashboard() {
     );
   }
 
-  // Si hay algún error crítico, mostrarlo
   if (error && transactions.length === 0 && categories.length === 0) {
     return (
       <>
@@ -235,7 +347,6 @@ export default function Dashboard() {
 
     const totalIngresosVariables = ingresosConCategorias.reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
-    // Crear lista HTML de ingresos variables
     const listaIngresos = ingresosConCategorias.length > 0 
       ? ingresosConCategorias.map(ingreso => `
           <div class="flex justify-between items-center p-2 bg-gray-50 rounded mb-2">
@@ -273,10 +384,8 @@ export default function Dashboard() {
     });
 
     if (action === true) {
-      // Agregar nuevo ingreso variable
       await mostrarFormularioIngresoVariable();
     } else if (action === false) {
-      // Ir a la página de ingresos variables
       navigate('/ingresos-variables');
     }
   };
@@ -382,7 +491,6 @@ export default function Dashboard() {
   };
 
   const handleAgregarSobrante = async () => {
-    // Buscar categoría de ahorro
     const categoriaAhorro = categories.find(cat => 
       cat.name.toLowerCase().includes('ahorro') || 
       cat.name.toLowerCase().includes('saving')
@@ -447,18 +555,13 @@ export default function Dashboard() {
       try {
         const newTransaction = {
           ...formValues,
-          type: 'income', // Se registra como ingreso porque es dinero que entra del mes anterior
-          regularity: 'extra', // Es un ingreso extra del sobrante
+          type: 'income', 
+          regularity: 'extra', 
           date: new Date().toISOString()
         };
 
-        console.log('💰 Agregando sobrante:', newTransaction);
         const result = await addTransaction(newTransaction);
-        console.log('✅ Resultado de agregar sobrante:', result);
-        console.log('🔍 Tipo de resultado:', typeof result);
-        console.log('🔍 Claves del resultado:', result ? Object.keys(result) : 'no hay resultado');
-        console.log('🔍 result.success:', result?.success);
-        console.log('🔍 Evaluación success:', !result || !result.success);
+       
         
         if (!result || !result.success) {
           console.error('❌ Error en resultado:', result);
@@ -473,9 +576,7 @@ export default function Dashboard() {
         });
 
       } catch (error) {
-        console.error('❌ Error al guardar sobrante:', error);
-        console.error('❌ Error stack:', error.stack);
-        console.error('❌ Error response:', error.response?.data);
+       
         
         const errorMessage = error.message || error.response?.data?.message || 'Error desconocido';
         
@@ -512,12 +613,7 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row items-center gap-2 mb-6">
             <span className="text-base text-green-950 flex items-center gap-2">
               Ingreso total: <span className="font-bold">${loading ? '...' : ingresoTotal.toFixed(2)}</span>
-              <button type="button" className="p-1 rounded-full hover:bg-yellow-200" aria-label="Editar ingreso total">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                </svg>
-              </button>
+             
             </span>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 mb-8 w-full">
@@ -573,10 +669,13 @@ export default function Dashboard() {
           ahorro={ahorro}
           sobranteParaGastar={sobranteParaGastar}
           diasRestantes={diasRestantes}
+          goals={goals}
+          mesSeleccionado={mesSeleccionado}
+          onAssignToGoal={handleAssignAhorroToGoal}
         />
 
       <DetalleIngresosGastos estadisticasMensuales={estadisticasMensuales} />
-      <MetaAhorro ahorroHistorico={ahorroHistorico} />
+      <MetaAhorro ahorroHistorico={ahorroHistorico} goals={goals} />
       </main>
     </>
   );

@@ -2,20 +2,11 @@ import axiosInstance from '../infrastructure/api/axiosInstance';
 
 export const authRepository = {
   login: async ({ name, password }) => {
-    console.log('🚀 Making login request with:', { name, password });
     
     try {
       const response = await axiosInstance.post('/api/v1/auth/login', { name, password });
+     
       
-      // Debug: ver la respuesta completa
-      console.log('✅ Login response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: response.data,
-        headers: response.headers
-      });
-      
-      // Buscar token en todos los lugares posibles
       const tokenFromData = response.data?.token || response.data?.accessToken || response.data?.access_token;
       const tokenFromHeaders = response.headers['authorization'] || 
                              response.headers['Authorization'] ||
@@ -50,8 +41,50 @@ export const authRepository = {
     }
   },
   register: async ({ name, email, password }) => {
-    const response = await axiosInstance.post('/api/v1/auth/register', { name, email, password });
-    return response.data;
+    console.log('🚀 Making register request with:', { name, email, password });
+    
+    try {
+      const response = await axiosInstance.post('/api/v1/auth/register', { 
+        name, 
+        email, 
+        password 
+      });
+      
+      // Debug: ver la respuesta completa
+      console.log('✅ Register response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data,
+        headers: response.headers
+      });
+      
+      // Manejar tanto 201 (Created) como 204 (No Content) como exitosos
+      if (response.status === 201 || response.status === 204) {
+        return {
+          success: true,
+          message: 'Usuario registrado exitosamente',
+          user: response.data?.user || { name, email },
+          data: response.data
+        };
+      }
+      
+      // Si hay data, devolverla tal como está
+      return response.data || {
+        success: true,
+        message: 'Usuario registrado exitosamente'
+      };
+      
+    } catch (error) {
+      console.error('❌ Register error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      
+      // Si es un error de validación o conflicto, extraer el mensaje
+      if (error.response?.status === 400 || error.response?.status === 409) {
+        throw new Error(error.response.data?.message || 'Error en el registro');
+      }
+      
+      throw error;
+    }
   },
   me: async () => {
     const response = await axiosInstance.get('/api/v1/auth/me');
