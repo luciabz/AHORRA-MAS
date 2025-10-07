@@ -63,9 +63,25 @@ export default async function handler(req, res) {
         data = await response.json();
       } else {
         const text = await response.text();
-        // Si el texto está vacío y es 204, crear respuesta de éxito
+        // Si el texto está vacío y es 204, crear respuesta apropiada según el endpoint
         if (response.status === 204 && !text) {
-          data = { success: true, message: 'Operación exitosa' };
+          // Para endpoints GET que deberían retornar listas (categorías, transacciones, etc.)
+          if (method === 'GET') {
+            if (apiPath.includes('category')) {
+              console.log('🏷️ GET categories returned 204, sending empty array');
+              data = [];
+            } else if (apiPath.includes('transaction') || apiPath.includes('goal') || apiPath.includes('schedule')) {
+              console.log('📋 GET list returned 204, sending empty array');
+              data = [];
+            } else {
+              console.log('📄 GET returned 204, sending empty object');
+              data = {};
+            }
+          } else {
+            // Para POST, PUT, DELETE mantener respuesta de éxito
+            console.log('✅ Operation successful (204)');
+            data = { success: true, message: 'Operación exitosa' };
+          }
         } else {
           data = text;
         }
@@ -75,8 +91,11 @@ export default async function handler(req, res) {
       data = { success: response.ok, status: response.status };
     }
     
-    // Responder con el mismo status code del backend
-    return res.status(response.status).json(data);
+    // Para responses 204 con datos, cambiar status a 200 para que el frontend lo procese correctamente
+    const statusCode = (response.status === 204 && data && (Array.isArray(data) || typeof data === 'object')) ? 200 : response.status;
+    
+    console.log(`📤 Sending response: ${statusCode}`, data);
+    return res.status(statusCode).json(data);
     
   } catch (error) {
     console.error('❌ Proxy error:', error);
