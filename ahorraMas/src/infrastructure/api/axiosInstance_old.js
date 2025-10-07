@@ -1,10 +1,48 @@
 import axios from 'axios';
 import { api } from '../../../constant';
 
-// Usar la configuración de constant.tsx que incluye toda la lógica de detección de entorno
-const baseURL = api;
+// Función para determinar la URL base apropiada
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const port = window.location.port;
+    
+    // Detección robusta de desarrollo
+    const isDevelopment = hostname === 'localhost' || 
+                         hostname === '127.0.0.1' ||
+                         port === '5173' ||
+                         port === '3000' ||
+                         port === '4173'; // Vite preview
+    
+    console.log('🌐 Environment Detection:', {
+      hostname,
+      protocol, 
+      port,
+      isDevelopment,
+      envVariable: api
+    });
+    
+    if (isDevelopment) {
+      // En desarrollo, siempre usar HTTP directo
+      console.log('🔧 DEVELOPMENT: Using direct HTTP connection');
+      return 'http://3.85.57.147:8080';
+    } else {
+      // En producción (Vercel, Netlify, etc.)
+      console.log('� PRODUCTION: Using proxy with relative URLs');
+      console.log('� Requests will go to: /api/* and be proxied to backend');
+      return ''; // URLs relativas que serán manejadas por el proxy
+    }
+  }
+  
+  // Fallback para entornos server-side (muy raro)
+  console.log('🖥️ SERVER-SIDE: Using fallback HTTP');
+  return 'http://3.85.57.147:8080';
+};
 
-console.log('📍 AXIOS CONFIGURATION (from constant.tsx):');
+const baseURL = getBaseURL();
+
+console.log('� AXIOS CONFIGURATION FINAL:');
 console.log('📍 Base URL:', baseURL || '(empty - using relative URLs for proxy)');
 console.log('🔗 Strategy:', baseURL === '' ? '🔄 PROXY MODE - URLs will be /api/* → backend' : '🎯 DIRECT MODE - URLs will go directly to backend');
 console.log('🌍 Current domain:', typeof window !== 'undefined' ? window.location.origin : 'server-side');
@@ -29,6 +67,7 @@ axiosInstance.interceptors.request.use((config) => {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
   
+
   return config;
 });
 
@@ -88,5 +127,6 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 export default axiosInstance;
