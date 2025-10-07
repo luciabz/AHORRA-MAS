@@ -103,7 +103,7 @@ export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Descripción */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
@@ -216,7 +216,7 @@ export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
         </div>
 
         {/* Fecha de finalización (opcional) */}
-        <div className="md:col-span-2">
+        <div className="sm:col-span-2">
           <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
             Fecha de finalización (opcional)
           </label>
@@ -237,11 +237,11 @@ export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="w-full sm:w-auto px-6 py-3 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
         >
           {loading && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

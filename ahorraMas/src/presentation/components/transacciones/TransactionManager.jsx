@@ -332,28 +332,42 @@ export default function TransactionManager() {
   }
 
   return (
-    <div className=" mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Gestión de Transacciones</h1>
+    <div className="mx-auto p-4 max-w-7xl">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800">Gestión de Transacciones</h1>
       
-      <div className="flex space-x-4 mb-6 border-b">
-        <button
-          className={`px-4 py-2 font-semibold ${activeTab === 'historicas' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600'}`}
-          onClick={() => setActiveTab('historicas')}
-        >
-          Transacciones Históricas
-        </button>
-        <button
-          className={`px-4 py-2 font-semibold ${activeTab === 'programadas' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600'}`}
-          onClick={() => setActiveTab('programadas')}
-        >
-          Transacciones Programadas
-        </button>
-        <button
-          className={`px-4 py-2 font-semibold ${activeTab === 'categorias' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600'}`}
-          onClick={() => setActiveTab('categorias')}
-        >
-          Categorías
-        </button>
+      <div className="mb-6 border-b">
+        <div className="hidden sm:flex space-x-4">
+          <button
+            className={`px-4 py-2 font-semibold transition-colors ${activeTab === 'historicas' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600 hover:text-teal-500'}`}
+            onClick={() => setActiveTab('historicas')}
+          >
+            Transacciones Históricas
+          </button>
+          <button
+            className={`px-4 py-2 font-semibold transition-colors ${activeTab === 'programadas' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600 hover:text-teal-500'}`}
+            onClick={() => setActiveTab('programadas')}
+          >
+            Transacciones Programadas
+          </button>
+          <button
+            className={`px-4 py-2 font-semibold transition-colors ${activeTab === 'categorias' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-600 hover:text-teal-500'}`}
+            onClick={() => setActiveTab('categorias')}
+          >
+            Categorías
+          </button>
+        </div>
+
+        <div className="sm:hidden">
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          >
+            <option value="historicas">Transacciones Históricas</option>
+            <option value="programadas">Transacciones Programadas</option>
+            <option value="categorias">Categorías</option>
+          </select>
+        </div>
       </div>
 
 

@@ -16,7 +16,6 @@ export default function Navbar() {
   return (
     <nav className="bg-teal-900 px-4 py-3 shadow flex items-center justify-between relative" aria-label="Navegación principal">
       <div className="font-bold text-xl text-white">AHORRA-MÁS</div>
-      {/* Botón hamburguesa mobile */}
       <button
         className="hidden max-md:flex flex-col justify-center items-center w-10 h-10 text-white focus:outline-none"
         aria-label="Abrir menú"
@@ -26,7 +25,6 @@ export default function Navbar() {
         <span className={`block h-0.5 w-6 bg-white mb-1 transition-all duration-200 ${open ? 'opacity-0' : ''}`}></span>
         <span className={`block h-0.5 w-6 bg-white transition-all duration-200 ${open ? '-rotate-45 -translate-y-2' : ''}`}></span>
       </button>
-      {/* Menú horizontal desktop y menú mobile */}
       <ul
         className={`md:flex space-x-0 md:space-x-4 p-2 md:p-0 flex-col md:flex-row absolute md:static top-full left-0 w-full md:w-auto bg-teal-900 md:bg-transparent z-20 transition-all duration-200 ${open ? 'flex' : 'hidden md:flex'}`}
       >

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTransactions } from '../../hooks/useTransactions';
 import { useScheduledTransactions } from '../../hooks/useScheduledTransactions';
 import { useCategories } from '../../hooks/useCategories';
@@ -10,26 +10,34 @@ export default function HistoricalTransactions() {
   
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   
   const loading = transLoading || scheduleLoading;
   const error = transError || scheduleError;
   
-  // Combinar transacciones regulares y programadas
   const allTransactions = [
     ...transactions.map(t => ({ ...t, isScheduled: false })),
     ...scheduledTransactions.map(t => ({ ...t, isScheduled: true }))
   ].sort((a, b) => new Date(b.createdAt || b.updatedAt) - new Date(a.createdAt || a.updatedAt));
 
-  const handleEdit = async (transaction) => {
-    // Crear modal o formulario de edición
-    const updatedData = {
-      description: prompt('Nueva descripción:', transaction.description),
-      amount: parseFloat(prompt('Nuevo monto:', transaction.amount)),
-      type: confirm('¿Es un ingreso?') ? 'income' : 'expense'
-    };
+  const handleEdit = (transaction) => {
+    setEditingTransaction(transaction);
+    setShowEditModal(true);
+  };
 
-    if (updatedData.description && updatedData.amount) {
-      await editTransaction(transaction.id, updatedData);
+  const handleUpdateTransaction = async (updatedData) => {
+    try {
+      const result = await editTransaction(editingTransaction.id, updatedData);
+      if (result.success) {
+        setShowEditModal(false);
+        setEditingTransaction(null);
+      } else {
+        alert(result.message || 'Error al actualizar la transacción');
+      }
+    } catch (error) {
+      console.error('Error actualizando transacción:', error);
+      alert('Error al actualizar la transacción');
     }
   };
 
@@ -85,30 +93,32 @@ export default function HistoricalTransactions() {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
         <h2 className="text-xl font-semibold">Transacciones</h2>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => setShowTransactionModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Nueva Transacción
+            <span className="hidden sm:inline">Nueva Transacción</span>
+            <span className="sm:hidden">Nueva</span>
           </button>
           <button
             onClick={() => setShowScheduleModal(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Transacción Programada
+            <span className="hidden sm:inline">Transacción Programada</span>
+            <span className="sm:hidden">Programada</span>
           </button>
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-gray-100">
@@ -186,7 +196,82 @@ export default function HistoricalTransactions() {
         )}
       </div>
 
-      {/* Modal para Nueva Transacción */}
+      <div className="md:hidden space-y-4">
+        {allTransactions.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">No hay transacciones históricas</div>
+        ) : (
+          allTransactions.map(transaction => (
+            <div
+              key={`${transaction.isScheduled ? 'sched' : 'trans'}-${transaction.id}`}
+              className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`px-2 py-1 rounded text-sm font-medium ${transaction.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {transaction.type === 'income' ? 'Ingreso' : 'Egreso'}
+                    </span>
+                    {transaction.isScheduled && (
+                      <span className="px-2 py-1 rounded text-xs bg-purple-100 text-purple-800">
+                        Programada
+                      </span>
+                    )}
+                    <span className={`px-2 py-1 rounded text-xs ${transaction.regularity === 'static' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {transaction.regularity === 'static' ? 'Fijo' : 'Variable'}
+                    </span>
+                    {transaction.isScheduled && transaction.status && (
+                      <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">
+                        Activa
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2 ml-2">
+                  <button
+                    onClick={() => handleEdit(transaction)}
+                    className="text-blue-600 hover:text-blue-800 p-2"
+                    title="Editar transacción"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(transaction.id)}
+                    className="text-red-600 hover:text-red-800 p-2"
+                    title="Eliminar transacción"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div>
+                  <h3 className="font-medium text-gray-900">{transaction.description}</h3>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <div className="text-lg font-bold text-gray-900">
+                    ${parseFloat(transaction.amount).toLocaleString()}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    <div>{new Date(transaction.createdAt).toLocaleDateString()}</div>
+                    {transaction.isScheduled && transaction.nextOccurrence && (
+                      <div className="text-xs">
+                        Próxima: {new Date(transaction.nextOccurrence).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       {showTransactionModal && (
         <TransactionModal
           isOpen={showTransactionModal}
@@ -197,7 +282,6 @@ export default function HistoricalTransactions() {
         />
       )}
 
-      {/* Modal para Transacción Programada */}
       {showScheduleModal && (
         <ScheduleTransactionModal
           isOpen={showScheduleModal}
@@ -205,6 +289,20 @@ export default function HistoricalTransactions() {
           onSubmit={handleCreateScheduleTransaction}
           categories={categories}
           title="Nueva Transacción Programada"
+        />
+      )}
+
+      {showEditModal && editingTransaction && (
+        <EditTransactionModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingTransaction(null);
+          }}
+          onSubmit={handleUpdateTransaction}
+          categories={categories}
+          transaction={editingTransaction}
+          title="Editar Transacción"
         />
       )}
     </div>
@@ -241,8 +339,8 @@ function TransactionModal({ isOpen, onClose, onSubmit, categories, title }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-50 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+    <div className="fixed inset-0 bg-gray-50 bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">{title}</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -325,17 +423,17 @@ function TransactionModal({ isOpen, onClose, onSubmit, categories, title }) {
             </select>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-3 sm:py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-center"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              className="flex-1 px-4 py-3 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-center"
             >
               Crear Transacción
             </button>
@@ -346,7 +444,6 @@ function TransactionModal({ isOpen, onClose, onSubmit, categories, title }) {
   );
 }
 
-// Componente Modal para Transacciones Programadas
 function ScheduleTransactionModal({ isOpen, onClose, onSubmit, categories, title }) {
   const [formData, setFormData] = useState({
     description: '',
@@ -523,19 +620,165 @@ function ScheduleTransactionModal({ isOpen, onClose, onSubmit, categories, title
             </label>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-3 sm:py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-center"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              className="flex-1 px-4 py-3 sm:py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-center"
             >
               Crear Programada
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function EditTransactionModal({ isOpen, onClose, onSubmit, categories, transaction, title }) {
+  const [formData, setFormData] = useState({
+    description: transaction?.description || '',
+    amount: transaction?.amount || '',
+    type: transaction?.type || 'expense',
+    regularity: transaction?.regularity || 'variable',
+    categoryId: transaction?.categoryId || ''
+  });
+
+  useEffect(() => {
+    if (transaction) {
+      setFormData({
+        description: transaction.description || '',
+        amount: transaction.amount || '',
+        type: transaction.type || 'expense',
+        regularity: transaction.regularity || 'variable',
+        categoryId: transaction.categoryId || ''
+      });
+    }
+  }, [transaction]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.description || !formData.amount || !formData.categoryId) {
+      alert('Por favor completa todos los campos');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      amount: parseFloat(formData.amount)
+    });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-gray-50 bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <input
+              type="text"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ej: Compra supermercado"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Monto</label>
+            <input
+              type="number"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              step="0.01"
+              min="0"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0.00"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+            <select
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="expense">Egreso</option>
+              <option value="income">Ingreso</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Regularidad</label>
+            <select
+              name="regularity"
+              value={formData.regularity}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="variable">Variable</option>
+              <option value="static">Fijo</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+            <select
+              name="categoryId"
+              value={formData.categoryId}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Selecciona una categoría</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 sm:py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-center"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-center"
+            >
+              Actualizar
             </button>
           </div>
         </form>
