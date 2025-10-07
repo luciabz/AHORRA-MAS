@@ -37,6 +37,12 @@ export const authRepository = {
     } catch (error) {
       console.error('❌ Login error:', error);
       console.error('❌ Error response:', error.response?.data);
+      
+      // Manejo específico para errores de red/SSL
+      if (error.isNetworkError || error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        throw new Error('Error de conexión al servidor. Verifique su conexión a internet o contacte al administrador.');
+      }
+      
       throw error;
     }
   },
@@ -77,6 +83,11 @@ export const authRepository = {
     } catch (error) {
       console.error('❌ Register error:', error);
       console.error('❌ Error response:', error.response?.data);
+      
+      // Manejo específico para errores de red/SSL
+      if (error.isNetworkError || error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        throw new Error('Error de conexión al servidor. Verifique su conexión a internet o contacte al administrador.');
+      }
       
       // Si es un error de validación o conflicto, extraer el mensaje
       if (error.response?.status === 400 || error.response?.status === 409) {
