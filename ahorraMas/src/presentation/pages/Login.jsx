@@ -23,13 +23,11 @@ export default function Login() {
       const result = await login(form);
       
       if (result.success) {
-        console.log('Login exitoso:', result);
         navigate('/dashboard');
       } else {
         setError(result.message || 'Credenciales incorrectas');
       }
     } catch (err) {
-      console.error('Error en login:', err);
       setError('Error de conexión. Intente nuevamente.');
     }
   };

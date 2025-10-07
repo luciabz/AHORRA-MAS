@@ -36,7 +36,6 @@ export default function HistoricalTransactions() {
         alert(result.message || 'Error al actualizar la transacción');
       }
     } catch (error) {
-      console.error('Error actualizando transacción:', error);
       alert('Error al actualizar la transacción');
     }
   };
@@ -56,7 +55,6 @@ export default function HistoricalTransactions() {
         alert(result.message || 'Error al crear la transacción');
       }
     } catch (error) {
-      console.error('Error creando transacción:', error);
       alert('Error al crear la transacción');
     }
   };
@@ -70,7 +68,6 @@ export default function HistoricalTransactions() {
         alert(result.message || 'Error al crear la transacción programada');
       }
     } catch (error) {
-      console.error('Error creando transacción programada:', error);
       alert('Error al crear la transacción programada');
     }
   };

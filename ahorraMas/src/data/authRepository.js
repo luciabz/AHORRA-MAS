@@ -16,7 +16,6 @@ export const authRepository = {
       
       const token = tokenFromData || tokenFromHeaders;
       
-      console.log('🔑 Token found:', {
         fromData: tokenFromData,
         fromHeaders: tokenFromHeaders,
         finalToken: token
@@ -35,8 +34,6 @@ export const authRepository = {
       return response.data;
       
     } catch (error) {
-      console.error('❌ Login error:', error);
-      console.error('❌ Error response:', error.response?.data);
       
       // Manejo específico para errores de red/SSL
       if (error.isNetworkError || error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
@@ -47,7 +44,6 @@ export const authRepository = {
     }
   },
   register: async ({ name, email, password }) => {
-    console.log('🚀 Making register request with:', { name, email, password });
     
     try {
       const response = await axiosInstance.post('/api/v1/auth/register', { 
@@ -57,7 +53,6 @@ export const authRepository = {
       });
       
       // Debug: ver la respuesta completa
-      console.log('✅ Register response received:', {
         status: response.status,
         statusText: response.statusText,
         data: response.data,
@@ -81,8 +76,6 @@ export const authRepository = {
       };
       
     } catch (error) {
-      console.error('❌ Register error:', error);
-      console.error('❌ Error response:', error.response?.data);
       
       // Manejo específico para errores de red/SSL
       if (error.isNetworkError || error.code === 'ERR_NETWORK' || error.message === 'Network Error') {

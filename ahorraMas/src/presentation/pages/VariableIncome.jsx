@@ -75,7 +75,6 @@ export default function VariableIncome() {
       setFormData({ description: '', amount: '', categoryId: '' });
       setShowForm(false);
     } catch (error) {
-      console.error('Error al guardar ingreso:', error);
       Swal.fire({
         title: 'Error',
         text: 'No se pudo guardar el ingreso variable',
@@ -108,7 +107,6 @@ export default function VariableIncome() {
           confirmButtonColor: '#16a34a'
         });
       } catch (error) {
-        console.error('Error al eliminar:', error);
         Swal.fire({
           title: 'Error',
           text: 'No se pudo eliminar el ingreso',

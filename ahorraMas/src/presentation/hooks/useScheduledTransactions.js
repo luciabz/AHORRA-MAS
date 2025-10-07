@@ -19,7 +19,6 @@ export const useScheduledTransactions = () => {
     
     try {
       const response = await getScheduleTransaction();
-      console.log('📅 Scheduled transactions response:', response);
       
       // Manejar diferentes estructuras de respuesta
       if (response.success !== undefined) {
@@ -40,7 +39,6 @@ export const useScheduledTransactions = () => {
         setScheduledTransactions(response || []);
       }
     } catch (error) {
-      console.error('Load scheduled transactions error:', error);
       setError(error.response?.data?.message || error.message || 'Error de conexión');
     } finally {
       setLoading(false);
@@ -54,7 +52,6 @@ export const useScheduledTransactions = () => {
     
     try {
       const response = await createScheduleTransaction(transactionData);
-      console.log('🔍 Response completa de createScheduleTransaction:', response);
       
       // Verificar si la respuesta tiene la estructura esperada
       if (response && response.success !== undefined) {
@@ -73,13 +70,11 @@ export const useScheduledTransactions = () => {
           setScheduledTransactions(prev => [...prev, response]);
           return { success: true, data: response };
         } else {
-          console.log('🔍 Respuesta inesperada de scheduled:', response);
           setError('Respuesta del servidor no reconocida');
           return { success: false, message: 'Respuesta del servidor no reconocida' };
         }
       }
     } catch (error) {
-      console.error('Create scheduled transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -125,7 +120,6 @@ export const useScheduledTransactions = () => {
         }
       }
     } catch (error) {
-      console.error('Update scheduled transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -149,7 +143,6 @@ export const useScheduledTransactions = () => {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Delete scheduled transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -172,7 +165,6 @@ export const useScheduledTransactions = () => {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Get scheduled transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };

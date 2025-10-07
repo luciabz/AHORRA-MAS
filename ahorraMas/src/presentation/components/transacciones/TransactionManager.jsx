@@ -122,7 +122,6 @@ export default function TransactionManager() {
       }
       resetForm();
     } catch (error) {
-      console.error('Error saving transaction:', error);
       Swal.fire('Error', error.message || 'No se pudo guardar la transacción', 'error');
     }
   };
@@ -146,7 +145,6 @@ export default function TransactionManager() {
           throw new Error(deleteResult.message);
         }
       } catch (error) {
-        console.error('Error deleting transaction:', error);
         Swal.fire('Error', error.message || 'No se pudo eliminar la transacción', 'error');
       }
     }
@@ -173,7 +171,6 @@ export default function TransactionManager() {
       }
       resetForm();
     } catch (error) {
-      console.error('Error saving scheduled transaction:', error);
       Swal.fire('Error', error.message || 'No se pudo guardar la transacción programada', 'error');
     }
   };
@@ -197,7 +194,6 @@ export default function TransactionManager() {
           throw new Error(deleteResult.message);
         }
       } catch (error) {
-        console.error('Error deleting scheduled transaction:', error);
         Swal.fire('Error', error.message || 'No se pudo eliminar la transacción programada', 'error');
       }
     }
@@ -226,7 +222,6 @@ export default function TransactionManager() {
       setEditingItem(null);
       setCategoryForm({ name: '', description: '', type: 'income' });
     } catch (error) {
-      console.error('Error saving category:', error);
       Swal.fire('Error', error.message || 'No se pudo guardar la categoría', 'error');
     }
   };
@@ -250,7 +245,6 @@ export default function TransactionManager() {
           throw new Error(deleteResult.message);
         }
       } catch (error) {
-        console.error('Error deleting category:', error);
         Swal.fire('Error', error.message || 'No se pudo eliminar la categoría', 'error');
       }
     }

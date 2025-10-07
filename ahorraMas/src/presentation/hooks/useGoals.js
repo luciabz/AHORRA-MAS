@@ -20,13 +20,10 @@ export const useGoals = () => {
     try {
       // Debug: verificar token antes de hacer la llamada
       const token = localStorage.getItem('token');
-      console.log('🎯 Goals - Token available:', !!token);
       if (token) {
-        console.log('🎯 Goals - Token preview:', token.substring(0, 20) + '...');
       }
       
       const response = await getGoal();
-      console.log('🎯 Goals response:', response);
       
       // Manejar diferentes estructuras de respuesta
       if (response === null || response === undefined) {
@@ -51,7 +48,6 @@ export const useGoals = () => {
         setGoals(response || []);
       }
     } catch (error) {
-      console.error('Load goals error:', error);
       
       // Si el endpoint no existe, simplemente usar datos vacíos en lugar de mostrar error
       if (error.response?.status === 401 || error.response?.status === 404) {
@@ -73,9 +69,6 @@ export const useGoals = () => {
     
     try {
       const response = await createGoal(goalData);
-      console.log('🔍 Response completa de createGoal:', response);
-      console.log('🔍 Tipo de response:', typeof response);
-      console.log('🔍 Claves de response:', response ? Object.keys(response) : 'no hay response');
       
       // Verificar si la respuesta tiene la estructura esperada
       if (response && response.success !== undefined) {
@@ -94,13 +87,11 @@ export const useGoals = () => {
           setGoals(prev => [...prev, response]);
           return { success: true, data: response };
         } else {
-          console.log('🔍 Respuesta inesperada de goal:', response);
           setError('Respuesta del servidor no reconocida');
           return { success: false, message: 'Respuesta del servidor no reconocida' };
         }
       }
     } catch (error) {
-      console.error('Create goal error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -146,7 +137,6 @@ export const useGoals = () => {
         }
       }
     } catch (error) {
-      console.error('Update goal error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -180,7 +170,6 @@ export const useGoals = () => {
         return { success: true };
       }
     } catch (error) {
-      console.error('Delete goal error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -216,7 +205,6 @@ export const useGoals = () => {
         }
       }
     } catch (error) {
-      console.error('Get goal error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };

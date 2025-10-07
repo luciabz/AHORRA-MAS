@@ -92,7 +92,6 @@ export default function FormGastoFijo({ onSubmit, onGastoCreated }) {
         });
       }
     } catch (error) {
-      console.error('Error al crear gasto fijo:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',

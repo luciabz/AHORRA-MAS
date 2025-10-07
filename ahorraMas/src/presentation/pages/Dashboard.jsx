@@ -130,8 +130,6 @@ export default function Dashboard() {
       parseFloat(goal.currentAmount || 0) < parseFloat(goal.targetAmount)
     );
 
-    console.log('🎯 Dashboard - Goals disponibles:', goals);
-    console.log('🎯 Dashboard - Metas activas filtradas:', metasActivas);
 
     if (metasActivas.length === 0) {
       // Si no hay metas activas, usar días restantes del mes como fallback
@@ -145,7 +143,6 @@ export default function Dashboard() {
       new Date(a.deadline || a.endDate) - new Date(b.deadline || b.endDate)
     )[0];
 
-    console.log('🎯 Dashboard - Meta más próxima:', metaMasProxima);
 
     // Calcular días restantes para esa meta
     const hoy = new Date();
@@ -153,7 +150,6 @@ export default function Dashboard() {
     const diferencia = fechaMeta - hoy;
     const diasRestantes = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
     
-    console.log('🎯 Dashboard - Días restantes calculados:', diasRestantes);
     
     return Math.max(0, diasRestantes);
   };
@@ -246,7 +242,6 @@ export default function Dashboard() {
         const nuevoMonto = parseFloat(meta.currentAmount || 0) + formValues.monto;
         
         // Simular actualización de meta (aquí deberías usar tu API)
-        console.log('🎯 Actualizando meta:', {
           metaId: formValues.metaId,
           nuevoMonto: nuevoMonto,
           montoAsignado: formValues.monto
@@ -262,7 +257,6 @@ export default function Dashboard() {
         // Aquí podrías recargar los datos o actualizar el estado
         
       } catch (error) {
-        console.error('Error al asignar ahorro a meta:', error);
         Swal.fire({
           title: 'Error',
           text: 'No se pudo asignar el ahorro a la meta',
@@ -479,7 +473,6 @@ export default function Dashboard() {
         });
 
       } catch (error) {
-        console.error('Error al guardar ingreso variable:', error);
         Swal.fire({
           title: 'Error',
           text: 'No se pudo guardar el ingreso variable. Intenta nuevamente.',
@@ -564,7 +557,6 @@ export default function Dashboard() {
        
         
         if (!result || !result.success) {
-          console.error('❌ Error en resultado:', result);
           throw new Error(result?.message || 'Error desconocido al guardar');
         }
         

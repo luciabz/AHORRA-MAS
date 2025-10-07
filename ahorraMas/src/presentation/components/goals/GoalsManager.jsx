@@ -34,9 +34,7 @@ const GoalsManager = () => {
         endDate: formData.deadline || null
       };
       
-      console.log('🎯 Enviando datos de meta:', goalData);
       const result = await addGoal(goalData);
-      console.log('🎯 Resultado de addGoal:', result);
 
       if (result && result.success) {
         alert('Meta creada exitosamente');
@@ -48,12 +46,9 @@ const GoalsManager = () => {
         });
         setShowForm(false);
       } else {
-        console.error('❌ Error en resultado de meta:', result);
         alert('Error: No se pudo crear la meta.');
       }
     } catch (error) {
-      console.error('❌ Excepción al crear meta:', error);
-      console.error('❌ Stack trace:', error.stack);
       alert('Error: ' + error.message);
     }
   };

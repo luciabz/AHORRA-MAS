@@ -25,20 +25,16 @@ export default function SavingsGoal() {
     e.preventDefault();
     setSuccess('');
     try {
-      console.log('🎯 SavingsGoal: Creando meta con datos:', form);
       const result = await addGoal(form);
-      console.log('🎯 SavingsGoal: Resultado de addGoal:', result);
       
       if (result && result.success) {
         setForm({ title: '', description: '', targetAmount: '', deadline: '' });
         setSuccess('Meta creada exitosamente');
         MySwal.fire({ icon: 'success', title: 'Meta creada', text: 'La meta fue creada exitosamente.' });
       } else {
-        console.error('❌ SavingsGoal: Error en resultado:', result);
         MySwal.fire({ icon: 'error', title: 'Error', text: result?.message || 'No se pudo crear la meta.' });
       }
     } catch (err) {
-      console.error('❌ SavingsGoal: Excepción:', err);
       MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la meta: ' + err.message });
     }
   };

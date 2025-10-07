@@ -19,7 +19,6 @@ export default async function handler(req, res) {
   const apiPath = Array.isArray(path) ? path.join('/') : (path || '');
   const targetURL = `${backendURL}/api/${apiPath}`;
   
-  console.log(`🔄 Proxy request: ${method} ${targetURL}`);
   
   try {
     // Construir headers para la request
@@ -42,8 +41,6 @@ export default async function handler(req, res) {
       requestBody = typeof body === 'string' ? body : JSON.stringify(body);
     }
     
-    console.log('📤 Request headers:', headers);
-    console.log('📤 Request body:', requestBody);
     
     // Hacer request al backend
     const response = await fetch(targetURL, {
@@ -52,7 +49,6 @@ export default async function handler(req, res) {
       body: requestBody,
     });
     
-    console.log(`📥 Backend response: ${response.status} ${response.statusText}`);
     
     // Obtener la respuesta
     let data;
@@ -68,18 +64,14 @@ export default async function handler(req, res) {
           // Para endpoints GET que deberían retornar listas (categorías, transacciones, etc.)
           if (method === 'GET') {
             if (apiPath.includes('category')) {
-              console.log('🏷️ GET categories returned 204, sending empty array');
               data = [];
             } else if (apiPath.includes('transaction') || apiPath.includes('goal') || apiPath.includes('schedule')) {
-              console.log('📋 GET list returned 204, sending empty array');
               data = [];
             } else {
-              console.log('📄 GET returned 204, sending empty object');
               data = {};
             }
           } else {
             // Para POST, PUT, DELETE mantener respuesta de éxito
-            console.log('✅ Operation successful (204)');
             data = { success: true, message: 'Operación exitosa' };
           }
         } else {
@@ -87,18 +79,15 @@ export default async function handler(req, res) {
         }
       }
     } catch (parseError) {
-      console.log('⚠️ Could not parse response as JSON, using as text');
       data = { success: response.ok, status: response.status };
     }
     
     // Para responses 204 con datos, cambiar status a 200 para que el frontend lo procese correctamente
     const statusCode = (response.status === 204 && data && (Array.isArray(data) || typeof data === 'object')) ? 200 : response.status;
     
-    console.log(`📤 Sending response: ${statusCode}`, data);
     return res.status(statusCode).json(data);
     
   } catch (error) {
-    console.error('❌ Proxy error:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Error de conexión con el servidor',

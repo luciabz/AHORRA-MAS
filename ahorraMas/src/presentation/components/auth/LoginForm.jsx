@@ -35,7 +35,6 @@ const LoginForm = () => {
       if (result.success) {
         alert(result.message || `${isLoginMode ? 'Login' : 'Registro'} exitoso`);
         // Aquí podrías redirigir al dashboard
-        console.log('Usuario logueado:', result.user);
       } else {
         alert(result.message);
       }

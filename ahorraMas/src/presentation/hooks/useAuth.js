@@ -15,7 +15,6 @@ export const useAuth = () => {
       try {
         return JSON.parse(userData);
       } catch (error) {
-        console.error('Error parsing user data:', error);
         localStorage.removeItem('user');
         localStorage.removeItem('token');
         return null;
@@ -37,7 +36,6 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      console.log('🔑 useAuth: Received credentials:', credentials);
       
       // Usar los datos tal como llegan del formulario
       const loginData = {
@@ -45,12 +43,10 @@ export const useAuth = () => {
         password: credentials.password
       };
       
-      console.log('🔑 useAuth: Sending loginData:', loginData);
       
       const response = await authRepository.login(loginData);
       
       // Debug: Log para ver la estructura de la respuesta
-      console.log('🔐 Login response:', response);
       
       // Manejar diferentes estructuras de respuesta de la API
       const token = response.token || response.accessToken || response.access_token;
@@ -64,7 +60,6 @@ export const useAuth = () => {
       if (success) {
         // Si tenemos token, guardarlo
         if (token) {
-          console.log('💾 Saving token:', token);
           localStorage.setItem('token', token);
         } else {
           console.warn('⚠️ Login successful but no token received');
@@ -96,7 +91,6 @@ export const useAuth = () => {
         };
       }
     } catch (error) {
-      console.error('Login error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return {
@@ -114,11 +108,9 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      console.log('🔑 useAuth: Registering user with:', userData);
       
       const response = await authRepository.register(userData);
       
-      console.log('📝 Register response:', response);
       
       // Verificar éxito: explícito success=true o respuesta exitosa implícita
       const isSuccess = response.success === true || 
@@ -153,7 +145,6 @@ export const useAuth = () => {
         };
       }
     } catch (error) {
-      console.error('❌ Register error:', error);
       
       // Extraer mensaje de error más específico
       let errorMessage = 'Error de conexión';
@@ -197,7 +188,6 @@ export const useAuth = () => {
         return response.user;
       }
     } catch (error) {
-      console.error('Fetch user data error:', error);
       // Si hay error de autenticación, hacer logout
       if (error.response?.status === 401) {
         logout();

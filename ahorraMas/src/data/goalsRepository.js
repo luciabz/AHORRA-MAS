@@ -2,12 +2,9 @@ import axiosInstance from '../infrastructure/api/axiosInstance';
 
 export const getGoal = async () => {
   try {
-    console.log('🎯 Calling goals API...');
     const { data } = await axiosInstance.get('/api/v1/goal');
-    console.log('🎯 Goals API response:', data);
     return data;
   } catch (error) {
-    console.error('🎯 Goals API error:', {
       status: error.response?.status,
       message: error.response?.data?.message || error.message,
       data: error.response?.data,

@@ -31,7 +31,6 @@ export default function Register() {
         setError(result.message || 'Error al registrar usuario');
       }
     } catch (err) {
-      console.error('Error en registro:', err);
       setError('Error de conexión. Intente nuevamente.');
     }
   };

@@ -19,7 +19,6 @@ export const useTransactions = () => {
     
     try {
       const response = await getTransactions();
-      console.log('📊 Transactions response:', response);
       
       // Manejar diferentes estructuras de respuesta
       if (response.success !== undefined) {
@@ -40,7 +39,6 @@ export const useTransactions = () => {
         setTransactions(response || []);
       }
     } catch (error) {
-      console.error('Load transactions error:', error);
       setError(error.response?.data?.message || error.message || 'Error de conexión');
     } finally {
       setLoading(false);
@@ -62,7 +60,6 @@ export const useTransactions = () => {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Create transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -90,7 +87,6 @@ export const useTransactions = () => {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Update transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -114,7 +110,6 @@ export const useTransactions = () => {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Delete transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -137,7 +132,6 @@ export const useTransactions = () => {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Get transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };

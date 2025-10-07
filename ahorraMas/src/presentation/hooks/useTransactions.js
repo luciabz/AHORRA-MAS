@@ -19,7 +19,6 @@ export const useTransactions = () => {
     
     try {
       const response = await getTransactions();
-      console.log('📊 Transactions response:', response);
       
       // Manejar diferentes estructuras de respuesta
       if (response.success !== undefined) {
@@ -40,7 +39,6 @@ export const useTransactions = () => {
         setTransactions(response || []);
       }
     } catch (error) {
-      console.error('Load transactions error:', error);
       setError(error.response?.data?.message || error.message || 'Error de conexión');
     } finally {
       setLoading(false);
@@ -54,9 +52,6 @@ export const useTransactions = () => {
     
     try {
       const response = await createTransaction(transactionData);
-      console.log('🔍 Response completa de createTransaction:', response);
-      console.log('🔍 Tipo de response:', typeof response);
-      console.log('🔍 Claves de response:', response ? Object.keys(response) : 'no hay response');
       
       // Verificar si la respuesta tiene la estructura esperada
       if (response && response.success !== undefined) {
@@ -75,13 +70,11 @@ export const useTransactions = () => {
           setTransactions(prev => [...prev, response]);
           return { success: true, data: response };
         } else {
-          console.log('🔍 Respuesta inesperada:', response);
           setError('Respuesta del servidor no reconocida');
           return { success: false, message: 'Respuesta del servidor no reconocida' };
         }
       }
     } catch (error) {
-      console.error('Create transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -127,7 +120,6 @@ export const useTransactions = () => {
         }
       }
     } catch (error) {
-      console.error('Update transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -151,7 +143,6 @@ export const useTransactions = () => {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Delete transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -174,7 +165,6 @@ export const useTransactions = () => {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Get transaction error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };

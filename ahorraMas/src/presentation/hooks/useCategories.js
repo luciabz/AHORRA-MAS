@@ -19,7 +19,6 @@ export const useCategories = () => {
     
     try {
       const response = await getCategory();
-      console.log('📂 Categories response:', response);
       
       // Manejar diferentes estructuras de respuesta
       if (response.success !== undefined) {
@@ -40,7 +39,6 @@ export const useCategories = () => {
         setCategories(response || []);
       }
     } catch (error) {
-      console.error('Load categories error:', error);
       setError(error.response?.data?.message || error.message || 'Error de conexión');
     } finally {
       setLoading(false);
@@ -76,7 +74,6 @@ export const useCategories = () => {
         }
       }
     } catch (error) {
-      console.error('Create category error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -122,7 +119,6 @@ export const useCategories = () => {
         }
       }
     } catch (error) {
-      console.error('Update category error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -155,7 +151,6 @@ export const useCategories = () => {
         return { success: true };
       }
     } catch (error) {
-      console.error('Delete category error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
@@ -191,7 +186,6 @@ export const useCategories = () => {
         }
       }
     } catch (error) {
-      console.error('Get category error:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };

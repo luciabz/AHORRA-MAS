@@ -30,7 +30,6 @@ export default function TablaGastosFijos({ gastos, onGastoUpdated }) {
         }
       }
     } catch (error) {
-      console.error('Error al eliminar gasto fijo:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
