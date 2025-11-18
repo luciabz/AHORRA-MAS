@@ -2,10 +2,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Cart
 import EmptyState from '../EmptyState';
 
 export default function DetalleIngresosGastos({ estadisticasMensuales }) {
-  // Validar que estadisticasMensuales sea un array
   const chartData = Array.isArray(estadisticasMensuales) ? estadisticasMensuales : [];
   
-  // Si no hay datos, mostrar un mensaje
   if (chartData.length === 0) {
     return (
       <section className="bg-white p-6 rounded shadow mb-6" aria-labelledby="detalle-ingresos-gastos">
@@ -47,7 +45,6 @@ export default function DetalleIngresosGastos({ estadisticasMensuales }) {
           </ResponsiveContainer>
         </div>
         
-        {/* Agregar información adicional */}
         <div>
           <h3 className="font-bold mb-2">Resumen del mes</h3>
           {chartData.map((data, index) => (

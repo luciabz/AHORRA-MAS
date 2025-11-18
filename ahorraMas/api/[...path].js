@@ -2,28 +2,23 @@ export default async function handler(req, res) {
   const { method, body, query } = req;
   const { path } = query;
   
-  // Configurar CORS headers primero
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
-  // Manejar preflight OPTIONS
   if (method === 'OPTIONS') {
     return res.status(200).end();
   }
   
-  // Construir la URL del backend
   const backendURL = 'http://3.85.57.147:8080';
   const apiPath = Array.isArray(path) ? path.join('/') : (path || '');
   const targetURL = `${backendURL}/api/${apiPath}`;
   
   
   try {
-    // Construir headers para la request
     const headers = {};
     
-    // Copiar headers importantes del request original
     if (req.headers['content-type']) {
       headers['Content-Type'] = req.headers['content-type'];
     }
@@ -34,14 +29,12 @@ export default async function handler(req, res) {
       headers['X-Requested-With'] = req.headers['x-requested-with'];
     }
     
-    // Preparar el body
     let requestBody = undefined;
     if (method !== 'GET' && method !== 'HEAD' && body) {
       requestBody = typeof body === 'string' ? body : JSON.stringify(body);
     }
     
     
-    // Hacer request al backend
     const response = await fetch(targetURL, {
       method: method,
       headers: headers,
@@ -49,7 +42,6 @@ export default async function handler(req, res) {
     });
     
     
-    // Obtener la respuesta
     let data;
     const contentType = response.headers.get('content-type');
     
@@ -58,9 +50,7 @@ export default async function handler(req, res) {
         data = await response.json();
       } else {
         const text = await response.text();
-        // Si el texto está vacío y es 204, crear respuesta apropiada según el endpoint
         if (response.status === 204 && !text) {
-          // Para endpoints GET que deberían retornar listas (categorías, transacciones, etc.)
           if (method === 'GET') {
             if (apiPath.includes('category')) {
               data = [];
@@ -70,7 +60,6 @@ export default async function handler(req, res) {
               data = {};
             }
           } else {
-            // Para POST, PUT, DELETE mantener respuesta de éxito
             data = { success: true, message: 'Operación exitosa' };
           }
         } else {
@@ -81,10 +70,8 @@ export default async function handler(req, res) {
       data = { success: response.ok, status: response.status };
     }
     
-    // Para responses 204 con datos, cambiar status a 200 para que el frontend lo procese correctamente
     const statusCode = (response.status === 204 && data && (Array.isArray(data) || typeof data === 'object')) ? 200 : response.status;
     
-    // Si es un POST exitoso a un endpoint de creación, intentar devolver datos enriquecidos
     if (response.status === 204 && method === 'POST' && apiPath.includes('category')) {
       try {
         // Recargar la lista de categorías para devolver la categoría creada

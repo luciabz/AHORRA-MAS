@@ -88,6 +88,8 @@ export default function HistoricalTransactions() {
     );
   }
 
+  const hasCategories = categories && categories.length > 0;
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
@@ -95,7 +97,9 @@ export default function HistoricalTransactions() {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => setShowTransactionModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
+            disabled={!hasCategories}
+            className={`${hasCategories ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'} text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors text-sm sm:text-base`}
+            title={!hasCategories ? "Debes crear una categoría primero" : ""}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -105,7 +109,9 @@ export default function HistoricalTransactions() {
           </button>
           <button
             onClick={() => setShowScheduleModal(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
+            disabled={!hasCategories}
+            className={`${hasCategories ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-400 cursor-not-allowed'} text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors text-sm sm:text-base`}
+            title={!hasCategories ? "Debes crear una categoría primero" : ""}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -115,6 +121,19 @@ export default function HistoricalTransactions() {
           </button>
         </div>
       </div>
+      {!hasCategories && (
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="font-semibold text-yellow-800">Debes crear una categoría primero</h3>
+              <p className="text-sm text-yellow-700 mt-1">Para guardar transacciones, es necesario que tengas al menos una categoría creada. Ve a la sección de Categorías para crear una.</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full table-auto">
           <thead>

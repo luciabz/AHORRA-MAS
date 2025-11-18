@@ -38,17 +38,7 @@ export default function CategoriesManager({
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                  <select
-                    value={categoryForm.type}
-                    onChange={(e) => setCategoryForm({...categoryForm, type: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value="income">Ingreso</option>
-                    <option value="expense">Egreso</option>
-                  </select>
-                </div>
+                
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
@@ -91,9 +81,7 @@ export default function CategoriesManager({
               <h3 className="font-semibold text-lg">{category.name}</h3>
               <p className="text-gray-600 mb-2">{category.description}</p>
               <div className="flex justify-between items-center">
-                <span className={`px-2 py-1 rounded text-sm ${category.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {category.type === 'income' ? 'Ingreso' : 'Egreso'}
-                </span>
+                
                 <div>
                   <button
                     onClick={() => onEdit(category)}

@@ -12,7 +12,6 @@ export const useCategories = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Cargar todas las categorías
   const loadCategories = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -20,22 +19,17 @@ export const useCategories = () => {
     try {
       const response = await getCategory();
       
-      // Manejar diferentes estructuras de respuesta
       if (response.success !== undefined) {
-        // API devuelve {success, data, message}
         if (response.success) {
           setCategories(response.data || []);
         } else {
           setError(response.message || 'Error al cargar categorías');
         }
       } else if (Array.isArray(response)) {
-        // API devuelve directamente un array
         setCategories(response);
       } else if (response.data && Array.isArray(response.data)) {
-        // API devuelve {data: [...]}
         setCategories(response.data);
       } else {
-        // Asumir que la respuesta directa son los datos
         setCategories(response || []);
       }
     } catch (error) {
@@ -45,7 +39,6 @@ export const useCategories = () => {
     }
   }, []);
 
-  // Crear una nueva categoría
   const addCategory = useCallback(async (categoryData) => {
     setLoading(true);
     setError(null);
@@ -55,15 +48,11 @@ export const useCategories = () => {
       
       
       
-      // Verificar si la respuesta tiene la estructura esperada
       if (response && response.success !== undefined) {
-        // API devuelve {success, data, message}
         if (response.success) {
           if (response.data) {
-            // Si hay data, agregarla a la lista
             setCategories(prev => [...prev, response.data]);
           } else {
-            // Si no hay data, recargar la lista de categorías
             await loadCategories();
           }
           return { success: true, data: response.data };
@@ -72,16 +61,13 @@ export const useCategories = () => {
           return { success: false, message: response.message };
         }
       } else if (Array.isArray(response)) {
-        // Si devuelve un array directamente, reemplazar las categorías
         setCategories(response);
         return { success: true, data: response };
       } else {
-        // La API podría estar devolviendo directamente el objeto creado
         if (response && (response.id || response._id)) {
           setCategories(prev => [...prev, response]);
           return { success: true, data: response };
         } else {
-          // Fallback: recargar categorías para asegurar sincronización
           await loadCategories();
           setError('Categoría creada pero no se pudo confirmar');
           return { success: true, message: 'Categoría creada' };
@@ -90,7 +76,6 @@ export const useCategories = () => {
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
-      // Intentar recargar las categorías después del error
       await loadCategories();
       return { success: false, message };
     } finally {
@@ -98,7 +83,6 @@ export const useCategories = () => {
     }
   }, [loadCategories]);
 
-  // Actualizar una categoría existente
   const editCategory = useCallback(async (id, categoryData) => {
     setLoading(true);
     setError(null);
@@ -106,9 +90,7 @@ export const useCategories = () => {
     try {
       const response = await updateCategory(id, categoryData);
       
-      // Verificar si la respuesta tiene la estructura esperada
       if (response && response.success !== undefined) {
-        // API devuelve {success, data, message}
         if (response.success) {
           setCategories(prev => 
             prev.map(category => 
@@ -121,7 +103,6 @@ export const useCategories = () => {
           return { success: false, message: response.message };
         }
       } else {
-        // La API podría estar devolviendo directamente el objeto actualizado
         if (response && (response.id || response._id)) {
           setCategories(prev => 
             prev.map(category => 
@@ -143,7 +124,6 @@ export const useCategories = () => {
     }
   }, []);
 
-  // Eliminar una categoría
   const removeCategory = useCallback(async (id) => {
     setLoading(true);
     setError(null);
@@ -151,9 +131,7 @@ export const useCategories = () => {
     try {
       const response = await deleteCategory(id);
       
-      // Verificar si la respuesta tiene la estructura esperada
       if (response && response.success !== undefined) {
-        // API devuelve {success, data, message}
         if (response.success) {
           setCategories(prev => prev.filter(category => category.id !== id));
           return { success: true };
@@ -162,7 +140,6 @@ export const useCategories = () => {
           return { success: false, message: response.message };
         }
       } else {
-        // Para eliminación, una respuesta vacía o con status 200 es éxito
         setCategories(prev => prev.filter(category => category.id !== id));
         return { success: true };
       }
@@ -175,7 +152,6 @@ export const useCategories = () => {
     }
   }, []);
 
-  // Obtener una categoría por ID
   const getCategoryDetails = useCallback(async (id) => {
     setLoading(true);
     setError(null);
@@ -183,9 +159,7 @@ export const useCategories = () => {
     try {
       const response = await getCategoryById(id);
       
-      // Verificar si la respuesta tiene la estructura esperada
       if (response && response.success !== undefined) {
-        // API devuelve {success, data, message}
         if (response.success) {
           return { success: true, data: response.data };
         } else {
@@ -193,7 +167,6 @@ export const useCategories = () => {
           return { success: false, message: response.message };
         }
       } else {
-        // La API podría estar devolviendo directamente el objeto
         if (response && (response.id || response._id)) {
           return { success: true, data: response };
         } else {
@@ -210,19 +183,16 @@ export const useCategories = () => {
     }
   }, []);
 
-  // Filtrar categorías por tipo (income/expense)
   const getCategoriesByType = useCallback((type) => {
     return categories.filter(category => category.type === type);
   }, [categories]);
 
-  // Buscar categoría por nombre
   const findCategoryByName = useCallback((name) => {
     return categories.find(category => 
       category.name.toLowerCase() === name.toLowerCase()
     );
   }, [categories]);
 
-  // Cargar categorías al montar el componente
   useEffect(() => {
     loadCategories();
   }, [loadCategories]);
