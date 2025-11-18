@@ -53,34 +53,50 @@ export const useCategories = () => {
     try {
       const response = await createCategory(categoryData);
       
+      
+      
       // Verificar si la respuesta tiene la estructura esperada
       if (response && response.success !== undefined) {
         // API devuelve {success, data, message}
         if (response.success) {
-          setCategories(prev => [...prev, response.data]);
+          if (response.data) {
+            // Si hay data, agregarla a la lista
+            setCategories(prev => [...prev, response.data]);
+          } else {
+            // Si no hay data, recargar la lista de categorías
+            await loadCategories();
+          }
           return { success: true, data: response.data };
         } else {
           setError(response.message || 'Error al crear categoría');
           return { success: false, message: response.message };
         }
+      } else if (Array.isArray(response)) {
+        // Si devuelve un array directamente, reemplazar las categorías
+        setCategories(response);
+        return { success: true, data: response };
       } else {
         // La API podría estar devolviendo directamente el objeto creado
         if (response && (response.id || response._id)) {
           setCategories(prev => [...prev, response]);
           return { success: true, data: response };
         } else {
-          setError('Respuesta del servidor no reconocida');
-          return { success: false, message: 'Respuesta del servidor no reconocida' };
+          // Fallback: recargar categorías para asegurar sincronización
+          await loadCategories();
+          setError('Categoría creada pero no se pudo confirmar');
+          return { success: true, message: 'Categoría creada' };
         }
       }
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
+      // Intentar recargar las categorías después del error
+      await loadCategories();
       return { success: false, message };
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadCategories]);
 
   // Actualizar una categoría existente
   const editCategory = useCallback(async (id, categoryData) => {

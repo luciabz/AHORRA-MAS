@@ -1,4 +1,3 @@
-// Función serverless para actuar como proxy a la API HTTP
 export default async function handler(req, res) {
   const { method, body, query } = req;
   const { path } = query;
@@ -84,6 +83,42 @@ export default async function handler(req, res) {
     
     // Para responses 204 con datos, cambiar status a 200 para que el frontend lo procese correctamente
     const statusCode = (response.status === 204 && data && (Array.isArray(data) || typeof data === 'object')) ? 200 : response.status;
+    
+    // Si es un POST exitoso a un endpoint de creación, intentar devolver datos enriquecidos
+    if (response.status === 204 && method === 'POST' && apiPath.includes('category')) {
+      try {
+        // Recargar la lista de categorías para devolver la categoría creada
+        const getResponse = await fetch(`${backendURL}/api/${apiPath.split('/')[0]}/category`, {
+          method: 'GET',
+          headers: {
+            'Authorization': headers['Authorization'],
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (getResponse.ok) {
+          const getContentType = getResponse.headers.get('content-type');
+          let categories = [];
+          
+          if (getContentType && getContentType.includes('application/json')) {
+            const responseData = await getResponse.json();
+            categories = Array.isArray(responseData) ? responseData : responseData.data || [];
+          }
+          
+          // Devolver la última categoría creada (asumiendo que es la más reciente)
+          if (categories.length > 0) {
+            const newCategory = categories[categories.length - 1];
+            return res.status(200).json({
+              success: true,
+              data: newCategory,
+              message: 'Categoría creada exitosamente'
+            });
+          }
+        }
+      } catch (reloadError) {
+        console.log('⚠️ Could not reload categories after creation');
+      }
+    }
     
     return res.status(statusCode).json(data);
     
