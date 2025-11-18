@@ -6,7 +6,6 @@ export const getGoal = async () => {
     return data;
   } catch (error) {
     
-    // Si es 401 o 404, retornar array vacío para no romper la app
     if (error.response?.status === 401 || error.response?.status === 404) {
       console.warn('🎯 Goals endpoint not available, using empty array');
       return [];
@@ -23,8 +22,14 @@ export const createGoal = async (payload) => {
 };
 
 export const updateGoal = async (id, payload) => {
-  const { data } = await axiosInstance.patch(`/api/v1/goal/${id}`, payload);
-  return data;
+  try {
+    console.log(`📤 Enviando PATCH a /api/v1/goal/${id}:`, payload);
+    const { data } = await axiosInstance.patch(`/api/v1/goal/${id}`, payload);
+    return data;
+  } catch (error) {
+    
+    throw error;
+  }
 };
 
 export const deleteGoal = async (id) => {

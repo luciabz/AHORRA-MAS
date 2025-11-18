@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useGoals } from '../../hooks';
 import { useNavigate } from 'react-router-dom';
 
-export default function MetaAhorro({ ahorroHistorico }) {
+export default function MetaAhorro({ ahorroHistorico, goals }) {
   const navigate = useNavigate();
-  const { goals, loading: goalsLoading } = useGoals();
   const [countdown, setCountdown] = useState({});
 
   // Función para calcular la cuenta regresiva
@@ -90,14 +88,13 @@ export default function MetaAhorro({ ahorroHistorico }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Cuenta regresiva de la próxima meta */}
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-3">
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 sm:p-6 rounded-lg border border-blue-200">
           <h3 className="text-base sm:text-lg font-semibold mb-4 text-blue-800">
             📅 Próxima Meta
           </h3>
           
-          {goalsLoading ? (
+          {!goals || goals.length === 0 ? (
             <div className="text-center py-4">
               <p className="text-gray-600">Cargando metas...</p>
             </div>
@@ -108,7 +105,6 @@ export default function MetaAhorro({ ahorroHistorico }) {
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">{nextGoal.description}</p>
               </div>
 
-              {/* Cuenta regresiva */}
               <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm">
                 <p className="text-xs sm:text-sm text-gray-600 mb-2">Tiempo restante:</p>
                 {nextGoalCountdown && !nextGoalCountdown.expired ? (
@@ -133,7 +129,6 @@ export default function MetaAhorro({ ahorroHistorico }) {
                 )}
               </div>
 
-              {/* Progreso */}
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span>Progreso</span>
@@ -173,73 +168,9 @@ export default function MetaAhorro({ ahorroHistorico }) {
           )}
         </div>
 
-        {/* Gráfico de evolución del ahorro */}
-        <div className="bg-white">
-          <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-800">
-            📈 Evolución del Ahorro
-          </h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={ahorroHistorico}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="fecha" 
-                tick={{ fontSize: 12 }}
-                tickMargin={5}
-              />
-              <YAxis 
-                tick={{ fontSize: 12 }}
-                tickMargin={5}
-              />
-              <Tooltip />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="cantidad" 
-                stroke="#22c55e" 
-                name="Ahorro acumulado" 
-                strokeWidth={2} 
-                dot={{ r: 3 }} 
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+       
       </div>
 
-      {/* Resumen de todas las metas */}
-      {goals.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <h3 className="text-base font-semibold mb-4 text-gray-800">
-            📊 Resumen de Metas ({goals.length})
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {goals.slice(0, 3).map(goal => (
-              <div key={goal.id} className="bg-gray-50 p-3 rounded-lg">
-                <h4 className="font-medium text-sm truncate">{goal.title}</h4>
-                <div className="flex justify-between text-xs text-gray-600 mt-1">
-                  <span>{calculateProgress(goal).toFixed(0)}%</span>
-                  <span>{formatCurrency(goal.targetAmount)}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
-                  <div 
-                    className="bg-green-500 h-1 rounded-full"
-                    style={{ width: `${calculateProgress(goal)}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-            {goals.length > 3 && (
-              <div className="bg-gray-50 p-3 rounded-lg flex items-center justify-center">
-                <button
-                  onClick={() => navigate('/meta')}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                >
-                  Ver {goals.length - 3} más →
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </section>
   );
 }

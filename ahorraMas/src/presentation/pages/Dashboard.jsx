@@ -37,7 +37,7 @@ export default function Dashboard() {
     getTotals 
   } = useTransactions();
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
-  const { goals, loading: goalsLoading } = useGoals();
+  const { goals, loading: goalsLoading, editGoal, loadGoals } = useGoals();
   const { 
     scheduledTransactions, 
     loading: scheduleLoading,
@@ -241,21 +241,56 @@ export default function Dashboard() {
         const meta = metasActivas.find(m => m.id === formValues.metaId);
         const nuevoMonto = parseFloat(meta.currentAmount || 0) + formValues.monto;
         
-        // Simular actualización de meta (aquí deberías usar tu API)
-
-        Swal.fire({
-          title: '¡Ahorro asignado!',
-          text: `Has asignado $${formValues.monto.toFixed(2)} a la meta "${meta.title}"`,
-          icon: 'success',
-          confirmButtonColor: '#16a34a'
+        console.log('📤 Enviando actualización de meta:', {
+          id: formValues.metaId,
+          title: meta.title,
+          description: meta.description,
+          targetAmount: meta.targetAmount,
+          currentAmount: nuevoMonto,
+          deadline: meta.deadline || meta.endDate
+        });
+        
+        // Actualizar la meta con el nuevo monto - enviando toda la estructura
+        const resultado = await editGoal(formValues.metaId, { 
+          title: meta.title,
+          description: meta.description,
+          targetAmount: meta.targetAmount,
+          currentAmount: nuevoMonto,
+          deadline: meta.deadline || meta.endDate
         });
 
-        // Aquí podrías recargar los datos o actualizar el estado
+        console.log('📥 Respuesta de editGoal:', resultado);
+
+        if (resultado && resultado.success !== false) {
+          const nuevoProgreso = (nuevoMonto / meta.targetAmount) * 100;
+          
+          console.log('✅ Ahorro asignado exitosamente a meta:', {
+            metaId: formValues.metaId,
+            metaNombre: meta.title,
+            montoAsignado: formValues.monto,
+            montoAnterior: meta.currentAmount,
+            montoNuevo: nuevoMonto,
+            progreso: nuevoProgreso.toFixed(1) + '%'
+          });
+          
+          // El estado se actualiza localmente en el hook
+          // No necesitamos recargar desde el backend
+          
+          Swal.fire({
+            title: '¡Ahorro asignado!',
+            text: `Has asignado $${formValues.monto.toFixed(2)} a la meta "${meta.title}"\n\nProgreso: ${nuevoProgreso.toFixed(1)}%`,
+            icon: 'success',
+            confirmButtonColor: '#16a34a'
+          });
+        } else {
+          throw new Error(resultado?.message || 'Error desconocido');
+        }
         
       } catch (error) {
+        console.error('❌ Error al asignar ahorro:', error);
         Swal.fire({
           title: 'Error',
-          text: 'No se pudo asignar el ahorro a la meta',
+          text: 'No se pudo asignar el ahorro a la meta: ' + (error.message || 'Intenta nuevamente'),
           icon: 'error',
           confirmButtonColor: '#dc2626'
         });

@@ -108,35 +108,22 @@ export const useGoals = () => {
     try {
       const response = await updateGoal(id, goalData);
       
-      // Verificar si la respuesta tiene la estructura esperada
-      if (response && response.success !== undefined) {
-        // API devuelve {success, data, message}
-        if (response.success) {
-          setGoals(prev => 
-            prev.map(goal => 
-              goal.id === id ? response.data : goal
-            )
-          );
-          return { success: true, data: response.data };
-        } else {
-          setError(response.message || 'Error al actualizar meta');
-          return { success: false, message: response.message };
-        }
-      } else {
-        // La API podría estar devolviendo directamente el objeto actualizado
-        if (response && (response.id || response._id)) {
-          setGoals(prev => 
-            prev.map(goal => 
-              goal.id === id ? response : goal
-            )
-          );
-          return { success: true, data: response };
-        } else {
-          setError('Respuesta del servidor no reconocida');
-          return { success: false, message: 'Respuesta del servidor no reconocida' };
-        }
-      }
+      console.log('🔄 Respuesta de updateGoal en editGoal:', response);
+      
+      // Actualizar el estado local inmediatamente con los datos que enviamos
+      const updatedGoal = { ...goalData };
+      setGoals(prev => 
+        prev.map(goal => 
+          (goal.id === id || goal._id === id) ? { ...goal, ...updatedGoal } : goal
+        )
+      );
+      
+      console.log('✅ Estado local actualizado en editGoal');
+      
+      return { success: true, data: updatedGoal };
+      
     } catch (error) {
+      console.error('❌ Error en editGoal:', error);
       const message = error.response?.data?.message || error.message || 'Error de conexión';
       setError(message);
       return { success: false, message };
