@@ -38,7 +38,7 @@ const getApiUrl = () => {
     if (isVercel) {
       return '';
     } else if (isDevelopment) {
-      return 'http://3.85.57.147:8080';
+      return 'https://ahorra-mas.onrender.com';
     }
   }
   

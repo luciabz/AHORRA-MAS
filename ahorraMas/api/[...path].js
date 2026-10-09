@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
   
-  const backendURL = 'http://3.85.57.147:8080';
+  const backendURL = 'https://ahorra-mas.onrender.com';
   const apiPath = Array.isArray(path) ? path.join('/') : (path || '');
   const targetURL = `${backendURL}/api/${apiPath}`;
   
